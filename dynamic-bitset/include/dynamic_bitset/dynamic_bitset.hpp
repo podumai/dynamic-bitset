@@ -20,6 +20,9 @@ template<typename Alloc>
 concept IsValidDynamicBitsetAllocType = std::unsigned_integral<typename std::allocator_traits<Alloc>::value_type>
                                        && !std::is_same_v<typename std::allocator_traits<Alloc>::value_type, bool>;
 
+template<typename BlockIterator, typename TargetBlock>
+concept IsValidDynamicBitsetBlockIterator = std::is_convertible_v<decltype(*BlockIterator{}), TargetBlock>;
+
 } /* End namespace __bits_details */
 
 namespace bits
@@ -198,6 +201,11 @@ class DynamicBitset
       explicit constexpr operator char() const noexcept
       {
         return byte_ != nullptr ? GetBit() | '0' : '0';
+      }
+
+      constexpr operator DynamicBitset::blockType() const noexcept
+      {
+        return byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst];
       }
 
      private:
@@ -504,7 +512,7 @@ class DynamicBitset
 
   [[nodiscard]] constexpr func ResizeFactor() const noexcept -> bool
   {
-    return (bits_ >> BlockInfo::byteDivConst) == bytes_;
+    return (bits_ >> BlockInfo::byteDivConst) == blocks_;
   }
 
   static constexpr func CopyData(
@@ -539,20 +547,20 @@ class DynamicBitset
 
   constexpr func GrowInit() -> void
   {
-    const sizeType newSize{(bytes_ << 1UL) + 2UL};
+    const sizeType newSize{(blocks_ << 1UL) + 2UL};
     pointer tempPtr{std::allocator_traits<allocatorType>::allocate(alloc_, newSize)};
 
     if (storage_)
     {
-      std::copy(storage_, storage_ + bytes_, tempPtr);
-      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+      std::copy(storage_, storage_ + blocks_, tempPtr);
+      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
     }
 
     /**
      * This step required for constexpr use.
      */
-    std::fill(tempPtr + bytes_, tempPtr + newSize, bitMask::RESET);
-    bytes_ = newSize;
+    std::fill(tempPtr + blocks_, tempPtr + newSize, bitMask::RESET);
+    blocks_ = newSize;
     storage_ = tempPtr;
   }
 
@@ -593,7 +601,7 @@ class DynamicBitset
       [[maybe_unused]] const allocatorType& allocator = allocatorType{}
   )
       : bits_{bits}
-      , bytes_{CalculateCapacity(bits)}
+      , blocks_{CalculateCapacity(bits)}
       , alloc_{allocator}
   {
     if (!bits)
@@ -601,9 +609,9 @@ class DynamicBitset
       return;
     }
 
-    storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, bytes_);
-    FillData(storage_, bytes_, bitMask::RESET);
-//    std::fill(storage_, storage_ + bytes_, bitMask::RESET);
+    storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, blocks_);
+    FillData(storage_, blocks_, bitMask::RESET);
+//    std::fill(storage_, storage_ + blocks_, bitMask::RESET);
     if (value)
     {
       *storage_ = value;
@@ -612,12 +620,12 @@ class DynamicBitset
 
   constexpr DynamicBitset(const DynamicBitset& other)
       : bits_{other.bits_}
-      , bytes_{other.bytes_}
+      , blocks_{other.blocks_}
   {
-    if (bytes_)
+    if (blocks_)
     {
-      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, bytes_);
-      CopyData(other.storage_, storage_, bytes_);
+      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, blocks_);
+      CopyData(other.storage_, storage_, blocks_);
     }
   }
 
@@ -626,23 +634,23 @@ class DynamicBitset
       [[maybe_unused]] const allocator_type& allocator
   )
       : bits_{other.bits_}
-      , bytes_{other.bytes_}
+      , blocks_{other.blocks_}
       , alloc_{allocator}
   {
-    if (bytes_)
+    if (blocks_)
     {
-      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, bytes_);
-      CopyData(other.storage_, storage_, bytes_);
+      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, blocks_);
+      CopyData(other.storage_, storage_, blocks_);
     }
   }
 
   constexpr DynamicBitset(DynamicBitset&& other) noexcept(noexcept(allocator_type{}))
     : storage_{other.storage_}
     , bits_{other.bits_}
-    , bytes_{other.bytes_}
+    , blocks_{other.blocks_}
   {
     other.storage_ = nullptr;
-    other.bits_ = other.bytes_ = 0;
+    other.bits_ = other.blocks_ = 0;
   }
 
   constexpr DynamicBitset(
@@ -651,25 +659,42 @@ class DynamicBitset
   ) noexcept
       : storage_{other.storage_}
       , bits_{other.bits_}
-      , bytes_{other.bytes_}
+      , blocks_{other.blocks_}
       , alloc_{allocator}
   {
     other.storage_ = nullptr;
-    other.bits_ = other.bytes_ = 0;
+    other.bits_ = other.blocks_ = 0;
   }
 
-  template<std::input_iterator BlockIterator>
+  template<__bits_details::IsValidDynamicBitsetBlockIterator<blockType> BlockIterator>
   constexpr DynamicBitset(BlockIterator first, BlockIterator last) noexcept
   {
-    const sizeType size{std::distance(first, last)};
+    sizeType size;
+    if constexpr (std::is_same_v<BlockIterator, Iterator> || std::is_same_v<BlockIterator, ConstIterator>)
+    {
+      size = static_cast<sizeType>(last - first);
+    }
+    else
+    {
+      size = static_cast<sizeType>(std::distance(first, last)) << BlockInfo::byteDivConst;
+    }
     if (!size)
     {
       return;
     }
-    storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, size);
-    bytes_ = size;
-    bits_ = size << BlockInfo::byteDivConst;
-    for (pointer begin{storage_}; first != last; ++first, ++begin)
+    try
+    {
+      blocks_ = CalculateCapacity(size);
+      bits_ = size;
+      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, blocks_);
+    }
+    catch (const std::exception&)
+    {
+      blocks_ = bits_ = 0;
+      throw;
+    }
+    pointer end{storage_ + blocks_};
+    for (pointer begin{storage_}; begin != end; ++first, ++begin)
     {
       *begin = *first;
     }
@@ -679,7 +704,7 @@ class DynamicBitset
   {
     if (storage_)
     {
-      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
       storage_ = nullptr;
     }
   }
@@ -687,7 +712,7 @@ class DynamicBitset
   /// TODO: shift
   [[nodiscard]] constexpr func Capacity() const noexcept -> sizeType
   {
-    return bytes_ << BlockInfo::byteDivConst;
+    return blocks_ << BlockInfo::byteDivConst;
   }
 
   [[nodiscard]] constexpr func MaxSize() const noexcept -> sizeType
@@ -752,13 +777,13 @@ class DynamicBitset
 
     const sizeType currentBytes{CalculateCapacity(bits_)};
 
-    if (currentBytes < bytes_)
+    if (currentBytes < blocks_)
     {
       pointer tempPtr{std::allocator_traits<allocatorType>::allocate(alloc_, currentBytes)};
-      CopyData(storage_, tempPtr, bytes_);
-      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+      CopyData(storage_, tempPtr, blocks_);
+      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
       storage_ = tempPtr;
-      bytes_ = currentBytes;
+      blocks_ = currentBytes;
     }
   }
 
@@ -841,9 +866,9 @@ class DynamicBitset
     {
       return;
     }
-    std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+    std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
     storage_ = nullptr;
-    bits_ = bytes_ = 0;
+    bits_ = blocks_ = 0;
   }
 
   constexpr func Resize(sizeType bits, bool value = false) -> void
@@ -860,24 +885,24 @@ class DynamicBitset
 
     const sizeType newSize{CalculateCapacity(bits)};
 
-    if (bytes_ < newSize)
+    if (blocks_ < newSize)
     {
       pointer temp_ptr{std::allocator_traits<allocatorType>::allocate(alloc_, newSize)};
 
       if (storage_)
       {
-        CopyData(storage_, temp_ptr, bytes_);
-        std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+        CopyData(storage_, temp_ptr, blocks_);
+        std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
       }
 
       storage_ = temp_ptr;
 
       FillData(
-          storage_ + bytes_,
-          newSize - bytes_,
+          storage_ + blocks_,
+          newSize - blocks_,
           value ? bitMask::SET : bitMask::RESET
       );
-      bytes_ = newSize;
+      blocks_ = newSize;
       bits_ = bits;
 
       return;
@@ -896,17 +921,17 @@ class DynamicBitset
       return;
     }
 
-    const sizeType newSize{bytes_ + bytes};
+    const sizeType newSize{blocks_ + bytes};
     pointer tempPtr{std::allocator_traits<allocatorType>::allocate(alloc_, newSize)};
 
     if (storage_)
     {
-      CopyData(storage_, tempPtr, bytes_);
-      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+      CopyData(storage_, tempPtr, blocks_);
+      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
     }
 
     storage_ = tempPtr;
-    bytes_ = newSize;
+    blocks_ = newSize;
   }
 
   constexpr func PushBack(bool value) -> void
@@ -1010,7 +1035,7 @@ class DynamicBitset
     }
     std::swap(storage_, other.storage_);
     std::swap(bits_, other.bits_);
-    std::swap(bytes_, other.bytes_);
+    std::swap(blocks_, other.blocks_);
   }
 
   // Element access
@@ -1077,15 +1102,15 @@ class DynamicBitset
     {
       return *this;
     }
-    if (bytes_ != other.bytes_)
+    if (blocks_ != other.blocks_)
     {
-      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
-      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, other.bytes_);
+      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
+      storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, other.blocks_);
     }
 
-    CopyData(other.storage_, storage_, other.bytes_);
+    CopyData(other.storage_, storage_, other.blocks_);
     bits_ = other.bits_;
-    bytes_ = other.bytes_;
+    blocks_ = other.blocks_;
 
     return *this;
   }
@@ -1098,14 +1123,14 @@ class DynamicBitset
     }
     if (storage_ != nullptr)
     {
-      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, bytes_);
+      std::allocator_traits<allocatorType>::deallocate(alloc_, storage_, blocks_);
       storage_ = nullptr;
-      bits_ = bytes_ = 0;
+      bits_ = blocks_ = 0;
     }
 
     std::swap(storage_, other.storage_);
     std::swap(bits_, other.bits_);
-    std::swap(bytes_, other.bytes_);
+    std::swap(blocks_, other.blocks_);
 
     return *this;
   }
@@ -1119,7 +1144,7 @@ class DynamicBitset
 
     pointer beginLhs{storage_};
     pointer beginRhs{rhs.storage_};
-    pointer End{storage_ + bytes_};
+    pointer End{storage_ + blocks_};
 
     [[likely]]
     while (beginLhs < End)
@@ -1139,7 +1164,7 @@ class DynamicBitset
 
     pointer beginLhs{storage_};
     pointer beginRhs{rhs.storage_};
-    pointer End{storage_ + bytes_};
+    pointer End{storage_ + blocks_};
 
     [[likely]]
     while (beginLhs < End)
@@ -1159,7 +1184,7 @@ class DynamicBitset
 
     pointer beginLhs{storage_};
     pointer beginRhs{rhs.storage_};
-    pointer End{storage_ + bytes_};
+    pointer End{storage_ + blocks_};
 
     [[likely]]
     while (beginLhs < End)
@@ -1178,7 +1203,7 @@ class DynamicBitset
     }
 
     auto bits{*this};
-    pointer End{bits.storage_ + bits.bytes_};
+    pointer End{bits.storage_ + bits.blocks_};
 
     [[likely]]
     for (pointer Begin{bits.storage_}; Begin < End; ++Begin)
@@ -1277,7 +1302,7 @@ class DynamicBitset
  private:
   pointer storage_{nullptr};
   sizeType bits_{};
-  sizeType bytes_{};
+  sizeType blocks_{};
   [[no_unique_address]] allocatorType alloc_;
 };
 
