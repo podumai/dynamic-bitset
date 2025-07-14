@@ -29,6 +29,37 @@ namespace bits
 {
 
 template<
+    __bits_details::IsValidDynamicBitsetBlockType Block,
+    __bits_details::IsValidDynamicBitsetAllocType Alloc
+        >
+class DynamicBitset;
+
+template<typename Alloc = std::allocator<size_t>>
+DynamicBitset(
+    typename std::allocator_traits<Alloc>::size_type,
+    typename std::allocator_traits<Alloc>::value_type,
+    const Alloc&
+) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
+
+template<typename Alloc = std::allocator<size_t>>
+DynamicBitset(
+    typename std::allocator_traits<Alloc>::size_type
+) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
+
+template<typename Alloc = std::allocator<size_t>>
+DynamicBitset(
+    typename std::allocator_traits<Alloc>::size_type,
+    typename std::allocator_traits<Alloc>::value_type
+) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
+
+template<typename Alloc = std::allocator<size_t>>
+DynamicBitset() -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
+
+template<typename Alloc>
+DynamicBitset(const Alloc&)
+  -> DynamicBitset<Alloc>;
+
+template<
     __bits_details::IsValidDynamicBitsetBlockType Block = size_t,
     __bits_details::IsValidDynamicBitsetAllocType Alloc = std::allocator<Block>
         >
@@ -123,6 +154,26 @@ class DynamicBitset
         return *this;
       }
 
+     private:
+      [[nodiscard]] constexpr func GetBit() const noexcept -> bool
+      {
+        return byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] &
+          DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
+      }
+
+      constexpr func SetBit() noexcept -> void
+      {
+        byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] |=
+          DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
+      }
+
+      constexpr func UnsetBit() noexcept -> void
+      {
+        byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] &=
+          ~(DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst));
+      }
+
+     public:
       constexpr func operator=(const BitWrapper& other) noexcept -> BitWrapper&
       {
         if (this == &other)
@@ -131,13 +182,11 @@ class DynamicBitset
         }
         if (other.GetBit())
         {
-          byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] |=
-            DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
+          SetBit();
         }
         else
         {
-          byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] &=
-            ~(DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst));
+          UnsetBit();
         }
 
         return *this;
@@ -147,8 +196,7 @@ class DynamicBitset
       {
         if (value)
         {
-          byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] |=
-            DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
+          SetBit();
         }
         return *this;
       }
@@ -157,8 +205,7 @@ class DynamicBitset
       {
         if (!value)
         {
-          byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] &=
-            DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
+          UnsetBit();
         }
         return *this;
       }
@@ -171,12 +218,6 @@ class DynamicBitset
             DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
         }
         return *this;
-      }
-
-      [[nodiscard]] constexpr func GetBit() const noexcept -> bool
-      {
-        return byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst] &
-          DynamicBitset::bitMask::BIT << (static_cast<DynamicBitset::sizeType>(bit_) & BlockInfo::byteModConst);
       }
 
       [[nodiscard]] constexpr func operator==(const BitWrapper& other) const noexcept -> bool
@@ -585,11 +626,9 @@ class DynamicBitset
     return {storage_, bits_};
   }
 
-  constexpr DynamicBitset() noexcept(noexcept(allocator_type{})) = default;
+  constexpr DynamicBitset() noexcept(std::is_nothrow_default_constructible_v<allocatorType>) = default;
 
-  explicit constexpr DynamicBitset(
-      [[maybe_unused]] const allocator_type& allocator
-  ) noexcept
+  explicit constexpr DynamicBitset(const std::add_lvalue_reference_t<allocatorType> allocator) noexcept(std::is_nothrow_copy_constructible_v<allocatorType>)
       : alloc_{allocator}
   {
     /* Empty */
@@ -631,7 +670,7 @@ class DynamicBitset
 
   constexpr DynamicBitset(
       const DynamicBitset& other, 
-      [[maybe_unused]] const allocator_type& allocator
+      const allocatorType& allocator
   )
       : bits_{other.bits_}
       , blocks_{other.blocks_}
@@ -644,7 +683,7 @@ class DynamicBitset
     }
   }
 
-  constexpr DynamicBitset(DynamicBitset&& other) noexcept(noexcept(allocator_type{}))
+  constexpr DynamicBitset(DynamicBitset&& other) noexcept(std::is_nothrow_default_constructible_v<allocatorType>)
     : storage_{other.storage_}
     , bits_{other.bits_}
     , blocks_{other.blocks_}
@@ -655,7 +694,7 @@ class DynamicBitset
 
   constexpr DynamicBitset(
       DynamicBitset&& other, 
-      [[maybe_unused]] const allocator_type& allocator
+      const allocatorType& allocator
   ) noexcept
       : storage_{other.storage_}
       , bits_{other.bits_}
@@ -730,7 +769,7 @@ class DynamicBitset
     return storage_;
   }
 
-  [[nodiscard]] constexpr func GetAllocator() const noexcept(noexcept(alloc_(allocatorType{}))) -> allocatorType
+  [[nodiscard]] constexpr func GetAllocator() const noexcept(std::is_nothrow_copy_constructible_v<allocatorType>) -> allocatorType
   {
     return alloc_;
   }
@@ -1308,10 +1347,10 @@ class DynamicBitset
 
 } /* End namespace bits */
 
-template<typename Alloc1, typename Alloc2>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator==(
-    const bits::DynamicBitset<Alloc1>& lhs,
-    const bits::DynamicBitset<Alloc2>& rhs
+    const bits::DynamicBitset<Block, Alloc>& lhs,
+    const bits::DynamicBitset<Block, Alloc>& rhs
 ) noexcept -> bool
 {
   if (lhs.size() != rhs.size())
@@ -1334,64 +1373,64 @@ template<typename Alloc1, typename Alloc2>
   return true;
 }
 
-template<typename Alloc1, typename Alloc2>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator!=(
-    const bits::DynamicBitset<Alloc1>& lhs,
-    const bits::DynamicBitset<Alloc2>& rhs
+    const bits::DynamicBitset<Block, Alloc>& lhs,
+    const bits::DynamicBitset<Block, Alloc>& rhs
 ) noexcept -> bool
 {
   return !(lhs == rhs);
 }
 
-template<typename Alloc>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator&(
-    const bits::DynamicBitset<Alloc>& lhs,
-    const bits::DynamicBitset<Alloc>& rhs
-) -> bits::DynamicBitset<Alloc>
+    const bits::DynamicBitset<Block, Alloc>& lhs,
+    const bits::DynamicBitset<Block, Alloc>& rhs
+) -> bits::DynamicBitset<Block, Alloc>
 {
   auto bits{lhs};
   bits &= rhs;
   return bits;
 }
 
-template<class Alloc>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator|(
-    const bits::DynamicBitset<Alloc>& lhs,
-    const bits::DynamicBitset<Alloc>& rhs
-) -> bits::DynamicBitset<Alloc>
+    const bits::DynamicBitset<Block, Alloc>& lhs,
+    const bits::DynamicBitset<Block, Alloc>& rhs
+) -> bits::DynamicBitset<Block, Alloc>
 {
   auto bits{lhs};
   bits |= rhs;
   return bits;
 }
 
-template<class Alloc>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator^(
-    const bits::DynamicBitset<Alloc>& lhs,
-    const bits::DynamicBitset<Alloc>& rhs
-) -> bits::DynamicBitset<Alloc>
+    const bits::DynamicBitset<Block, Alloc>& lhs,
+    const bits::DynamicBitset<Block, Alloc>& rhs
+) -> bits::DynamicBitset<Block, Alloc>
 {
   auto bits{lhs};
   bits ^= rhs;
   return bits;
 }
 
-template<class Alloc>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator<<(
-    const bits::DynamicBitset<Alloc>& bits,
+    const bits::DynamicBitset<Block, Alloc>& bits,
     const size_t bitOffset
-) -> bits::DynamicBitset<Alloc>
+) -> bits::DynamicBitset<Block, Alloc>
 {
   auto tempBits{bits};
   tempBits <<= bitOffset;
   return tempBits;
 }
 
-template<class Alloc>
+template<typename Block, typename Alloc>
 [[nodiscard]] constexpr func operator>>(
-    const bits::DynamicBitset<Alloc>& bits,
+    const bits::DynamicBitset<Block, Alloc>& bits,
     const size_t bitOffset
-) -> bits::DynamicBitset<Alloc>
+) -> bits::DynamicBitset<Block, Alloc>
 {
   auto tempBits{bits};
   tempBits >>= bitOffset;
@@ -1401,12 +1440,12 @@ template<class Alloc>
 namespace std
 {
 
-template<class Alloc>
-struct formatter<bits::DynamicBitset<Alloc>>
+template<typename Block, typename Alloc>
+struct formatter<bits::DynamicBitset<Block, Alloc>>
     : formatter<string>
 {
   [[nodiscard]] func format(
-      const bits::DynamicBitset<Alloc> bits,
+      const bits::DynamicBitset<Block, Alloc> bits,
       format_context& ctx
   ) const -> decltype(formatter<string>::format(bits.ToString(), ctx))
   {
@@ -1414,10 +1453,10 @@ struct formatter<bits::DynamicBitset<Alloc>>
   }
 };
 
-template<class Alloc>
+template<typename Block, typename Alloc>
 constexpr func swap(
-    bits::DynamicBitset<Alloc>& lhs,
-    bits::DynamicBitset<Alloc>& rhs
+    bits::DynamicBitset<Block, Alloc>& lhs,
+    bits::DynamicBitset<Block, Alloc>& rhs
 ) noexcept -> void
 {
   lhs.swap(rhs);
