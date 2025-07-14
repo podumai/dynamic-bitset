@@ -35,11 +35,10 @@ template<
 class DynamicBitset;
 
 template<typename Alloc = std::allocator<size_t>>
-DynamicBitset(
-    typename std::allocator_traits<Alloc>::size_type,
-    typename std::allocator_traits<Alloc>::value_type,
-    const Alloc&
-) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
+DynamicBitset() -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
+
+template<typename Alloc>
+DynamicBitset(const Alloc&) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
 
 template<typename Alloc = std::allocator<size_t>>
 DynamicBitset(
@@ -53,11 +52,11 @@ DynamicBitset(
 ) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
 
 template<typename Alloc = std::allocator<size_t>>
-DynamicBitset() -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
-
-template<typename Alloc>
-DynamicBitset(const Alloc&)
-  -> DynamicBitset<Alloc>;
+DynamicBitset(
+    typename std::allocator_traits<Alloc>::size_type,
+    typename std::allocator_traits<Alloc>::value_type,
+    const Alloc&
+) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
 
 template<
     __bits_details::IsValidDynamicBitsetBlockType Block = size_t,
@@ -125,6 +124,7 @@ class DynamicBitset
      public:
       constexpr BitWrapper() noexcept = default;
 
+     private:
       constexpr BitWrapper(
           pointer ptr,
           differenceType bitPosition
@@ -135,6 +135,7 @@ class DynamicBitset
         /* Empty */
       }
 
+     public:
       constexpr BitWrapper(const BitWrapper&) noexcept = default;
       constexpr ~BitWrapper() = default;
 
@@ -244,7 +245,7 @@ class DynamicBitset
         return byte_ != nullptr ? GetBit() | '0' : '0';
       }
 
-      constexpr operator DynamicBitset::blockType() const noexcept
+      explicit constexpr operator DynamicBitset::blockType() const noexcept
       {
         return byte_[static_cast<DynamicBitset::sizeType>(bit_) >> BlockInfo::byteDivConst];
       }
@@ -378,6 +379,9 @@ class DynamicBitset
 
   class ConstIterator
   {
+   private:
+    friend DynamicBitset;
+ 
    public:
     using difference_type = typename DynamicBitset::difference_type;
     using differenceType = typename DynamicBitset::differenceType;
@@ -389,7 +393,8 @@ class DynamicBitset
 
    public:
     constexpr ConstIterator() noexcept = default;
-
+  
+   private:
     constexpr ConstIterator(
         pointer ptr,
         differenceType bit_position
@@ -400,6 +405,7 @@ class DynamicBitset
       /* Empty */
     }
 
+   public:
     constexpr ConstIterator(const ConstIterator&) noexcept = default;
     constexpr ~ConstIterator() = default;
 
@@ -553,7 +559,7 @@ class DynamicBitset
 
   [[nodiscard]] constexpr func ResizeFactor() const noexcept -> bool
   {
-    return (bits_ >> BlockInfo::byteDivConst) == blocks_;
+    return (bits_ >> BlockInfo::byteDivConst) >= blocks_;
   }
 
   static constexpr func CopyData(
@@ -628,7 +634,7 @@ class DynamicBitset
 
   constexpr DynamicBitset() noexcept(std::is_nothrow_default_constructible_v<allocatorType>) = default;
 
-  explicit constexpr DynamicBitset(const std::add_lvalue_reference_t<allocatorType> allocator) noexcept(std::is_nothrow_copy_constructible_v<allocatorType>)
+  explicit constexpr DynamicBitset(const allocatorType& allocator) noexcept(std::is_nothrow_copy_constructible_v<allocatorType>)
       : alloc_{allocator}
   {
     /* Empty */
@@ -637,7 +643,7 @@ class DynamicBitset
   constexpr DynamicBitset(
       sizeType bits,
       blockType value = 0,
-      [[maybe_unused]] const allocatorType& allocator = allocatorType{}
+      const allocatorType& allocator = allocatorType{}
   )
       : bits_{bits}
       , blocks_{CalculateCapacity(bits)}
@@ -650,7 +656,6 @@ class DynamicBitset
 
     storage_ = std::allocator_traits<allocatorType>::allocate(alloc_, blocks_);
     FillData(storage_, blocks_, bitMask::RESET);
-//    std::fill(storage_, storage_ + blocks_, bitMask::RESET);
     if (value)
     {
       *storage_ = value;
@@ -735,7 +740,7 @@ class DynamicBitset
     pointer end{storage_ + blocks_};
     for (pointer begin{storage_}; begin != end; ++first, ++begin)
     {
-      *begin = *first;
+      *begin = static_cast<blockType>(*first);
     }
   }
 
