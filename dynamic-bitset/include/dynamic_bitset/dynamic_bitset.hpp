@@ -485,7 +485,7 @@ class DynamicBitset
   };
 
  private:
-  [[nodiscard]] static constexpr func CalculateCapacity(sizeType bits) const noexcept -> sizeType
+  [[nodiscard]] static constexpr func CalculateCapacity(sizeType bits) noexcept -> sizeType
   {
     return (bits >> BlockInfo::byteDivConst) + (bits & BlockInfo::byteModConst ? 1 : 0);
   }
