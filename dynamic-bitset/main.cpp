@@ -8,18 +8,9 @@
 
 auto main() -> int
 {
-  bits::DynamicBitset bits(16UL, 0xffUL);
-  std::cout << bits.ToString() << std::endl;
-  auto start{bits.begin()};
-  auto end{bits.end() - 1};
-  while (start < end)
-  {
-    bool bitValue{static_cast<bool>(*start)};
-    *start = *end;
-    *end = bitValue;
-    ++start;
-    --end;
-  }
-  std::cout << bits.ToString() << std::endl;
+  std::vector<unsigned long> longs(2, 0);
+  bits::DynamicBitset<unsigned long> bits(longs.cbegin(), longs.cend());
+  bits::DynamicBitset<unsigned long> anotherBits(bits.begin(), bits.end());
+  std::cout << anotherBits.ToString() << ' ' << anotherBits.Capacity() << std::endl;
   return 0;
 }
