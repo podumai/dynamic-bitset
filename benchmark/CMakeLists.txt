@@ -35,6 +35,7 @@ elseif(STD_VECTOR_BOOL_TEST)
 else()
   set(TEST_UNIT -DUNKNOWN_TEST_UNIT)
 endif()
+message(STATUS "Start building Google Benchmarks for ${TEST_UNIT}")
 target_compile_options(
     ${PROJECT_NAME}-BENCHMARK
       PRIVATE
