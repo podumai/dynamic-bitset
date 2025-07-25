@@ -1,28 +1,39 @@
 /**
  * @file dynamic_bitset/dynamic_bitset.hpp
- * @author Kirill Morozov
+ * @date 25-07-2025
+ * @version 1.0.1
+ * @copyright MIT License
+ * 
+ * @author Kirill Morozov kirillsm05@gmail.com
+ *                        podumai@github.com
  */
 
 /**
- * @defgroup dynamic-bitset-main Core API
  * @brief Main `DynamicBitset` container and operations
+ * @defgroup dynamic-bitset-main Core API
  */
 
 /**
- * @defgroup dynamic-bitset-iterators
+ * @brief Alias definitions in `DynamicBitset` class
+ * @defgroup dynamic-bitset-aliases
+ * @ingroup dynamic-bitset-main
+ */
+
+/**
  * @brief Iterator types and range operations
+ * @defgroup dynamic-bitset-iterators
  * @ingroup dynamic-bitset-main
  */
 
 /**
- * @defgroup dynamic-bitset-bitops Bit operations
  * @brief Bit-level manipulation (Set/Reset/Test/Flip)
+ * @defgroup dynamic-bitset-bitops Bit operations
  * @ingroup dynamic-bitset-main
  */
 
 /**
- * @defgroup dynamic-bitset-format Formatting
  * @brief `std::format` integration and string conversion
+ * @defgroup dynamic-bitset-format Formatting
  * @ingroup dynamic-bitset-main
  */
 
@@ -46,13 +57,10 @@
 
 #include <iterator> /* iterator_traits, Iterator concepts */
 #include <memory> /* std::allocator<T> */
-#include <bitset> /* std::bitset<N> */
 #include <bit>
 #include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
 #include <concepts> /* std::unsigned_integral */
 #include <format> /* std::format */
-
-#include <cstring>
 
 #include <cstdint> /* std::size_t, std::ptrdiff_t */
 #include <climits> /* CHAR_BIT */
@@ -61,10 +69,22 @@
   #error "bits::DynamicBitset only works on platforms with 8 bits per byte."
 #endif
 
-namespace __bits_details
+#define BEGIN_BITS_NAMESPACE \
+namespace bits \
 {
+#define END_BITS_NAMESPACE }
+
+#define BEGIN_BITS_DETAILS_NAMESPACE \
+namespace __bits_details \
+{
+#define END_BITS_DETAILS_NAMESPACE }
+
+BEGIN_BITS_DETAILS_NAMESPACE
 
 /**
+ * @brief Validates the passed Block type.
+ * @details Validates the passed Block type to be unsigned integral type
+ *          except `bool`, checks type if is power of two.
  * @concept IsValidDynamicBitsetBlockType
  */
 template<typename Block>
@@ -73,6 +93,9 @@ concept IsValidDynamicBitsetBlockType = std::unsigned_integral<Block>
                                      && !(sizeof(Block) & (sizeof(Block) - 1));
 
 /**
+ * @brief Validates the passed Allocator type.
+ * @details Validates the passed Allocator type that uses unsigned integral type
+ *          except `bool`, checks `value_type` fieled to be power of two.
  * @concept IsValidDynamicBitsetAllocType
  */
 template<typename Alloc>
@@ -81,18 +104,20 @@ concept IsValidDynamicBitsetAllocType = std::unsigned_integral<typename std::all
                                        && !(sizeof(typename std::allocator_traits<Alloc>::value_type) & (sizeof(typename std::allocator_traits<Alloc>::value_type) - 1));
 
 /**
+ * @brief Validates the passed Block iterator type.
+ * @details Validates the passed Block iterator type to be convertible to block type.
  * @concept IsValidDynamicBitsetBlockIterator
  */
 template<typename BlockIterator, typename TargetBlock>
 concept IsValidDynamicBitsetBlockIterator = std::is_convertible_v<decltype(*BlockIterator{}), TargetBlock>;
 
-} /* End namespace __bits_details */
+END_BITS_DETAILS_NAMESPACE
 
 /**
+ * @brief Namespace containing `DynamicBitset` implementation.
  * @namespace bits
  */
-namespace bits
-{
+BEGIN_BITS_NAMESPACE
 
 template<
     __bits_details::IsValidDynamicBitsetBlockType Block,
@@ -122,9 +147,16 @@ DynamicBitset(
 ) -> DynamicBitset<typename std::allocator_traits<Alloc>::value_type, Alloc>;
 
 /**
+ * @brief Container representing a set of bits.
+ * 
+ * @ingroup dynamic-bitset-main
+ * 
  * @class DynamicBitset
  * @tparam Block Unsigned integral type used for bit storage.
  * @tparam Alloc Allocator type meeting Cpp17Allocator requirements.
+ * 
+ * @details `DynamicBitset` provides an abstraction over a bit sequence.
+ *          This container support vector-like interface with bitwise operations support.
  */
 template<
     __bits_details::IsValidDynamicBitsetBlockType Block = size_t,
@@ -137,21 +169,91 @@ class DynamicBitset
   class ConstIterator;
 
  public:
+  /**
+   * @public
+   * @ingroup dynamic-bitset-aliases
+   * @{
+   */
+  /**
+   * @brief An alias representing block type using snake case.
+   * @typedef block_type
+   */
   using block_type = Block;
+  /**
+   * @brief An alias representing block type using camel case.
+   * @typedef blockType
+   */
   using blockType = Block;
+  /**
+   * @brief An alias representing allocator type using snake case.
+   * @typedef allocator_type
+   */
   using allocator_type = Alloc;
+  /**
+   * @brief An alias representing allocator type using camel case.
+   * @typedef allocatorType
+   */
   using allocatorType = Alloc;
+  /**
+   * @brief An alias representing size type using snake case.
+   * @typedef size_type
+   */
   using size_type = typename std::allocator_traits<allocator_type>::size_type;
+  /**
+   * @brief An alias representing size type using camel case.
+   * @typedef sizeType
+   */
   using sizeType = typename std::allocator_traits<allocatorType>::size_type;
+  /**
+   * @brief An alias representing pointer difference type using snake case.
+   * @typedef difference_type
+   */
   using difference_type = typename std::allocator_traits<allocator_type>::difference_type;
+  /**
+   * @brief An alias representing pointer difference type using camel case.
+   * @typedef differenceType
+   */
   using differenceType = typename std::allocator_traits<allocatorType>::difference_type;
+  /**
+   * @brief An alias representing pointer type.
+   * @typedef pointer
+   */
   using pointer = typename std::allocator_traits<allocator_type>::pointer;
+  /**
+   * @brief An alias representing pointer to contant type using snake case.
+   * @typedef const_pointer
+   */
   using const_pointer = const typename std::allocator_traits<allocator_type>::pointer;
+  /**
+   * @brief An alias representing pointer to constant type using camel case.
+   * @typedef constPointer
+   */
   using constPointer = const typename std::allocator_traits<allocatorType>::pointer;
+  /**
+   * @brief An alias representing logical value type using snake case.
+   * @typedef value_type
+   * 
+   * @note This alias type do not represent the internal value type.
+   */
   using value_type = bool;
+  /**
+   * @brief An alias representing logical value type using camel case.
+   * @typedef valueType
+   * 
+   * @note This alias type do not represent the internal value type.
+   */
   using valueType = bool;
+  /**
+   * @brief An alias representing iterator type.
+   * @typedef iterator
+   */
   using iterator = Iterator;
+  /**
+   * @brief An alias representing constant iterator type using snake case.
+   * @typedef const_iterator
+   */
   using const_iterator = ConstIterator;
+  /// @}
 
  private:
   enum bitMask : blockType
@@ -268,10 +370,6 @@ class DynamicBitset
       {
         BITS_DYNAMIC_BITSET_ASSERT(this != &other);
 
-        if (this == &other)
-        {
-          return *this;
-        }
         if (other.GetBit())
         {
           SetBit();
@@ -1407,7 +1505,7 @@ class DynamicBitset
    * @details If bit storage contains unused memory blocks the container resizes
    *          to the minimal capacity to hold the current size.
    * 
-   * @throws std::bad_alloc if memory allocation fails (original storage remains intact).
+   * @throws std::bad_alloc If memory allocation fails (original storage remains intact).
    * 
    * @warning If bit storage contains unused blocks:
    *  - Iterators invalidated.
@@ -1445,8 +1543,10 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Returns `true` if at least one bit is set, `false` otherwise.
+   * @brief Check if any bit is set to `true`.
    * @details Scans the bit storage to find first set bit (bit that is set to `true`).
+   * 
+   * @return `true` if at any bit is set, `false` otherwise.
    * 
    * @throws None (no-throw guarantee).
    * 
@@ -1496,9 +1596,11 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Returns `true` if all bits unset, `false` otherwise.
+   * @brief Check if none of the bits are set.
    * @details Scans the bit storage to find at least one set bit (bit that set to `true`).
    *          Returns when block with at least one set bit occurres.
+   * 
+   * @return `true` if all bits are unset, `false` otherwise.
    * 
    * @throws None (no-throw guarantee).
    * 
@@ -1519,9 +1621,12 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Returns `true` if all bits are set, `false` otherwise.
+   * @brief Check if all bits are set.
    * @details Scans the bit storage and counts the set bits.
    *          If Size() == Count() returns `true`, `false` otherwise.
+   * @see Size(), Count()
+   * 
+   * @return `true` if all bits are set, `false` otherwise.
    * 
    * @throws None (no-throw guarantee).
    * 
@@ -1546,7 +1651,8 @@ class DynamicBitset
    * @details This method determines whether the underlying bit storage is empty.
    *          Equivalent to `Size() == 0`.
    * @see Size()
-   * @return `true` if container is empty, `false` otherwise.
+   * 
+   * @return `true` If container is empty, `false` otherwise.
    * 
    * @throws None (no-throw guarantee).
    * 
@@ -1591,11 +1697,22 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] bits.
-   * @param[in] value.
+   * @brief Resizes `DynamicBitset` to the given size. If `Size() < bits` then new bits set to `value`.
+   * 
+   * @param[in] bits Bits that `DynamicBitset` will store.
+   * @param[in] value Value that will be set to new bits.
+   * 
    * @throws std::bad_alloc If memory allocation fails.
    * 
-   * @note This operation invalidates all iterators if `bits > Size()` or `bits < Size()`.
+   * @warning This operation invalidates all iterators if `bits != Size()`.
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{5}; // Size() == 5, Sequence: [1, 1, 1, 1, 1]
+   * bits.Resize(7); // Size() == 7, Sequence: [1, 1, 1, 1, 1, 0, 0]
+   * bits.Resize(100); // Size() == 7, Sequence: [1, 1, 1, 1, 1, 0, 0]
+   * bits.Resize(0); // Size() = 0, Sequence: []
+   * @endcode
    */
   constexpr func Resize(sizeType bits, bool value = false) -> void
   {
@@ -1642,10 +1759,20 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] bytes.
+   * @brief Reserve amount of blocks to store new bits.
+   * @details This operation modifies number of stored blocks, not the stored bits.
+   * 
+   * @param[in] bytes Bytes to append to the underlying storage.
+   * 
    * @throws std::bad_alloc If memory allocation fails.
    * 
-   * @note This operation invalidates all iterators.
+   * @warning This operation invalidates all iterators if `blocks > 0`.
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits; // Size() == 0, Capacity() == 0
+   * bits.Reserve(10); // Size() == 0, Capacity() == sizeof(BlockType) * 10 * 8
+   * @endcode
    */
   constexpr func Reserve(sizeType blocks) -> void
   {
@@ -1670,13 +1797,13 @@ class DynamicBitset
   /**
    * @public
    * @brief Appends a bit to the end of the sequence.
+   * 
    * @param[in] value The bit value `true/false` to append.
    * 
    * @throws std::bad_alloc If memory allocation fails.
    * 
-   * @note Iterator invalidation:
-   *  - All iterators are invalidated if reallocation occurs.
-   *  - Only `end()` iterators are invalidated if no reallocation occurs.
+   * @warning This operation invalidates all iterators if reallocation occurs,
+   *          otherwise `end()` iterator gets changed.
    * 
    * @par Example:
    * @code{.cpp}
@@ -1698,6 +1825,7 @@ class DynamicBitset
   /**
    * @public
    * @brief Returns the number of bits currently stored in the container.
+   * 
    * @return The exact count of bits.
    * 
    * @throws None (no-throw guarantee).
@@ -1719,7 +1847,19 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Removes last bit from the sequence.
+   * 
    * @throws None (no-throw guarantee).
+   * 
+   * @warning If `Size() == 0` the behaviour is undefined.
+   * 
+   * @see Size(), Empty()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits(8, 0xff); // Size() == 8, Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits.PopBack(); // Size() == 7, Sequence: [1, 1, 1, 1, 1, 1, 1]
+   * @endcode
    */
   constexpr func PopBack() noexcept -> void
   {
@@ -1730,9 +1870,22 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Set the bit with `index` to `value`. Implies range check.
+   * 
    * @param[in] index The zero-based index of the bit to set/unset.
    * @param[in] value The boolean value `true/false`.
+   * @return Reference to `this` object.
+   * 
    * @throws std::out_of_range If `index >= Size()` (out-of-bounds access).
+   * 
+   * @see operator[], Test()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4}; // Sequence: [0, 0, 0, 0]
+   * bits.Set(2, true); // Sequence: [0, 0, 1, 0]
+   * bits.Set(100); // Throws std::out_of_range exception
+   * @endcode
    */
   constexpr func Set(sizeType index, bool value = false) -> DynamicBitset&
   {
@@ -1751,7 +1904,20 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Set all bits to `true`. Implies range checking.
+   * 
+   * @return Reference to `this` object.
+   * 
    * @throws std::out_of_range If `Empty() == true`.
+   * @see Empty()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{8}; // Sequence: [0, 0, 0, 0, 0, 0, 0, 0]
+   * bits.Set(); // Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits.Clear(); // Sequence: []
+   * bits.Set(); // Throws std::out_of_range exception
+   * @endcode
    */
   constexpr func Set() -> DynamicBitset&
   {
@@ -1766,8 +1932,20 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Set bit with `index` to `false`. Implies range checking.
+   * 
    * @param[in] index The zero-based index of the bit to reset.
+   * @return Reference to `this` object.
+   * 
    * @throws std::out_of_range If `index >= Size()` (out-of-bounds access).
+   * @see Size(), operator[]
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4, 0xff}; // Sequence: [1, 1, 1, 1]
+   * bits.Reset(2); // Sequence: [1, 1, 0, 1]
+   * bits.Reset(100); // Throws std::out_of_range exception
+   * @endcode
    */
   constexpr func Reset(sizeType index) -> DynamicBitset&
   {
@@ -1786,7 +1964,21 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Set all bits to `false`. Implies range checking.
+   * 
+   * @return Reference to `this` object.
+   * 
    * @throws std::out_of_range If `Empty() == true`.
+   * 
+   * @see Empty()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4, 0xff}; // Sequence: [1, 1, 1, 1]
+   * bits.Reset(); // Sequence: [0, 0, 0, 0]
+   * bits.Clear(); // Sequence: []
+   * bits.Reset(); // Throws std::out_of_range exception
+   * @endcode
    */
   constexpr func Reset() -> DynamicBitset&
   {
@@ -1801,8 +1993,23 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Flip bit with given `index` with range checking.
+   * @details Stores `true` if bit with given `index` is unset,
+   *          otherwise `false` stored. Implies range checking.
+   * 
    * @param[in] index The zero-based index of the bit to flip.
+   * @return Reference to `this` object.
+   * 
    * @throws std::out_of_range If `index >= Size()` (out-of-bounds access).
+   * @see Size()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4, 0xff}; // Sequence: [1, 1, 1, 1]
+   * bits.Flip(0); // Sequence: [0, 1, 1, 1]
+   * bits.Flip(0); // Sequence: [1, 1, 1, 1]
+   * bits.Flip(100); // Throws std::out_of_range exception
+   * @endcode
    */
   constexpr func Flip(sizeType index) -> DynamicBitset&
   {
@@ -1823,7 +2030,19 @@ class DynamicBitset
 
   /**
    * @public
+   * @brief Flip all bits in sequence.
+   * 
+   * @return Reference to `this` object.
+   * 
    * @throws std::out_of_range If container is empty.
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4, 10}; // Sequence: [0, 1, 0, 1]
+   * bits.Flip(); // Sequence: [1, 0, 1, 0]
+   * bits.Clear(); // Sequence: []
+   * bits.Flip(); // Throws std::out_of_range exception
+   * @endcode
    */
   constexpr func Flip() -> DynamicBitset&
   {
@@ -1846,11 +2065,20 @@ class DynamicBitset
   /**
    * @public
    * @brief Swaps the contents of the two bit sequences.
-   * @details This member function swaps all internal contents of the
-   *          two container objects. Does not modify the container if
-   *          this == &other.
-   * @param[in] other.
+   * @details This method swaps all internal contents of the
+   *          two container objects.
+   * 
+   * @param[in] other `DynamicBitset` object.
+   * 
    * @throws None (no-throw guarantee).
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4, 0xff}; // Size() == 4, Sequence: [1, 1, 1, 1]
+   * bits::DynamicBitset anotherBits{2}; // Size() == 2, Sequence: [0, 0]
+   * bits.Swap(anotherBits); // bits: Size() == 2, Sequence: [0, 0]
+   *                         // anotherBits: Size() == 4, Sequence: [1, 1, 1, 1]
+   * @endcode
    */
   constexpr func Swap(DynamicBitset& other) noexcept -> void
   {
@@ -1871,15 +2099,28 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Provides the access to the bit referenced by given index.
-   * @details This operator overload provides the access to the certain bit
-   *          using special wrapper class. Non const overload may change the
-   *          bit value.
-   * @see bits::DynamicBitset::Iterator::BitWrapper.
+   * @brief Provides the read/write access to the bit with given index.
+   * @details This operator provides the ability to modify or read
+   *          bit with given index. Gives fast access with no
+   *          range checking.
+   * 
+   * @see BitWrapper.
+   * 
    * @param[in] index The zero-base index of the bit to access.
-   * @return bits::DynamicBitset::Iterator::BitWrapper object to obtain the specified bit.
+   * @return BitWrapper object to obtain the specified bit.
+   * 
    * @throws None (no-throw guarantee).
-   * @note This operator overload does not check the given index and may lead to UB.
+   * 
+   * @warning **Undefined Behaviour** if:
+   * - The container is empty `Size() == 0` or `Size() <= index`
+   * @see At()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4}; // Sequence: [0, 0, 0, 0]
+   * bits[0] = true; // Sequence: [1, 0, 0, 0]
+   * bits[10] = true; // Undefined behaviour
+   * @endcode
    */
   [[nodiscard]] constexpr func operator[](sizeType index) noexcept -> typename Iterator::BitWrapper
   {
@@ -1890,13 +2131,25 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Provides the access to the bit referenced by given index.
-   * @details This operator overload provides the access to the certain bit
-   *          but only the view of the value stored in it.
+   * @brief Provides the read-only access to the bit with given index.
+   * @details This operator provides the ability to read bit with given index.
+   *          Gives fast access with no range checking.
+   * 
    * @param[in] index The zero-based index of the bit to access.
    * @return `true` if bit is set, `false` otherwise.
+   * 
    * @throws None (no-throw guarantee).
-   * @note This operator overload does not check the given index and may lead to UB.
+   * 
+   * @warning **Undefined Behaviour** if:
+   * - The container is empty `Size() == 0`.
+   * @see At()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * const bits::DynamicBitset bits{4}; // Sequence: [0, 0, 0, 0]
+   * bool bitValue{bits[0]}; // bitValue == false
+   * bool anotherBitValue{bits[10]}; // Undefined behaviour
+   * @endcode
    */
   [[nodiscard]] constexpr func operator[](sizeType index) const noexcept -> bool
   {
@@ -1907,15 +2160,28 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Provides the access to the first bit in bit sequence obtained by the container.
-   * @details This member function provides the access to the first bit in
-   *          bit sequence using special wrapper class. 
-   *          Non const overload may change the bit value.
-   * @see bits::DynamicBitset::Iterator::BitWrapper
-   * @return `bits::DynamicBitset::Iterator::BitWrapper`.
+   * @brief Provides the read/write access to the first bit in bit sequence.
+   * @details This method provides the ability to read or modify
+   *          state of first bit in sequence. Gives the fast
+   *          access to the bit with no range checking.
+   * 
+   * @see BitWrapper
+   * 
+   * @return BitWrapper object to obtain first bit.
+   * 
    * @throws None (no-throw guarantee).
-   * @note This member function does not check the container state before invocation.
-   *       Invoking Front member function on empty container lead to UB.
+   * 
+   * @warning **Undefined behaviour** if:
+   * - The container is empty `Size() == 0`.
+   * @see Size()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4}; // Sequence: [0, 0, 0, 0]
+   * bits.Front() = true; // Sequence: [1, 0, 0, 0]
+   * bits.Clear(); // Sequence: []
+   * bits.Front() = false; // Undefined behaviour
+   * @endcode
    */
   [[nodiscard]] constexpr func Front() noexcept -> typename Iterator::BitWrapper
   {
@@ -1926,13 +2192,27 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Provides the access to the first bit in bit sequence obtained by the container.
-   * @details This member function provides the access to the first bit in
+   * @brief Provides the read-only access to the first bit in sequence.
+   * @details This method provides the access to the first bit in
    *          bit sequence. Does not modify the container state.
+   * 
+   * @see operator[], At()
+   * 
    * @return `true` if bit is set, `false` otherwise.
+   * 
    * @throws None (no-throw guarantee).
-   * @note This member function does not check the container state before invocation.
-   *       Invoking Front member function on empty container lead to UB.
+   * 
+   * @warning **Undefined behaviour** if:
+   * - The container is empty `Size() == 0`.
+   * @see Size()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * const bits::DynamicBitset bits{4}; // Sequence: [0, 0, 0, 0]
+   * bool bitValue{bits.Front()}; // bitValue == false
+   * const bits::DynamicBitset anotherBits; // Sequence: []
+   * bool anotherBitValue{anotherBits.Front()}; // Undefined behaviour
+   * @endcode
    */
   [[nodiscard]] constexpr func Front() const noexcept -> bool
   {
@@ -1943,19 +2223,30 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Provides the access to the last bit in bit sequence obtained by the container.
-   * @details This member function provides the access to the last bit in
-   *          bit sequence using special wrapper class.
-   *          Non const overload may change the bit value.
-   * @see bits::DynamicBitset::Iterator::BitWrapper
-   * @return `bits::DynamicBitset::Iterator::BitWrapper`.
+   * @brief Provides the read/write access to the last bit in sequence without bounds checking.
+   * @details This method provides read and write access to
+   *          the last bit in sequence. Gives fast access to
+   *          the bit with no range checking.
+   * @see BitWrapper
+   * 
+   * @return BitWrapper object to obtain last bit.
+   * 
    * @throws None (no-throw guarantee).
    * 
    * @warning **Undefined Behaviour** if:
    * - The container is empty `Size() == 0`.
+   * @see Size()
    * 
    * @note For bounds-checking access, use `At()`.
    * @see At()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{2}; // Sequence: [0, 0]
+   * bits.Back() = true; // Sequence: [0, 1]
+   * bits.Clear(); // Sequence: []
+   * bits.Back() = false; // Undefined behaviour
+   * @endcode
    */
   [[nodiscard]] constexpr func Back() noexcept -> typename Iterator::BitWrapper
   {
@@ -1966,9 +2257,10 @@ class DynamicBitset
 
   /**
    * @public
-   * @brief Provides the access to the last bit in sequence without bounds checking.
+   * @brief Provides the read-only access to the last bit in sequence without bounds checking.
    * @details This member function provides the access to the last bit in
    *          bit sequence. Does not modify the container state.
+   * 
    * @return `true` if bit is set, `false` otherwise.
    * @throws None (no-throw guarantee).
    * 
@@ -1977,6 +2269,14 @@ class DynamicBitset
    * 
    * @note For bounds-checked access, use `At()`.
    * @see At()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * const bits::DynamicBitset bits{2}; // Sequence: [0, 0]
+   * bool bitValue{bits.Back()}; // bitValue = false
+   * const bits::DynamicBitset anotherBits; // Sequence: []
+   * bool anotherBitValue{anotherBits.Back()}; // Undefined behaviour
+   * @endcode
    */
   [[nodiscard]] constexpr func Back() const noexcept -> bool
   {
@@ -1997,10 +2297,18 @@ class DynamicBitset
    * 
    * @param[in] index The zero-based index of the bit to access.
    * @return `BitWrapper`
+   * 
    * @throws std::out_of_range If `index >= Size()` (out-of-bounds access).
    * 
    * @note For unchecked access, use `operator[]` or `Test()`.
    * @see operator[], Test()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4}; // Sequence: [0, 0, 0, 0]
+   * bits.At(0) = true; // Sequence: [1, 0, 0, 0]
+   * bits.At(5) = true; // Throws std::out_of_range exception
+   * @endcode
    */
   [[nodiscard]] constexpr func At(sizeType index) -> typename Iterator::BitWrapper
   {
@@ -2031,6 +2339,14 @@ class DynamicBitset
    * 
    * @note For unchecked access, use `operator[]` or `Test()`.
    * @see operator[], Test()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * const bits::DynamicBitset bits{2}; // Sequence: [0, 0]
+   * bool bitValue{bits.At(0)}; // bitValue == false
+   * const bits::DynamicBitset anotherBits; // Sequence: []
+   * bool anotherBitValue{anotherBits.At(0)}; // Throws std::out_of_range exception
+   * @endcode
    */
   [[nodiscard]] constexpr func At(sizeType index) const -> bool
   {
@@ -2057,6 +2373,7 @@ class DynamicBitset
    * 
    * @param[in] index The zero-based index of the bit to access.
    * @return `true` if the bit is set, `false` otherwise.
+   * 
    * @throws None (no-throw guarantee).
    * 
    * @warning **Undefined Behaviour** if:
@@ -2065,6 +2382,10 @@ class DynamicBitset
    * 
    * @note For bounds-checked access, use `At()`.
    * @see At()
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * @endcode
    */
   [[nodiscard]] constexpr func Test(sizeType index) const noexcept -> bool
   {
@@ -2076,11 +2397,18 @@ class DynamicBitset
   /**
    * @public
    * @brief Copies the contents of another bit sequence.
-   * @param[in] other Another bits::DynamicBitset object
-   * @return `bits::DynamicBitset&`.
+   * 
+   * @param[in] other Another `DynamicBitset` object.
+   * @return Reference to `this` object.
+   * 
    * @throws std::bad_alloc If reallocation of internal buffer takes place.
-   * @note This operator overload may throw an exception when container
-   *       resizes to the size of other bit sequence.
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{8, 0xff}; // Size() == 8, Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits::DynamicBitset anotherBits; // Size() == 0, Sequence: []
+   * anotherBits = bits; // Size() == 8, Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * @endcode
    */
   DynamicBitset& operator=(const DynamicBitset& other)
   {
@@ -2112,7 +2440,7 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] other.
+   * @param[in] other Another `DynamicBitset` object.
    */
   constexpr func operator=(DynamicBitset&& other) noexcept -> DynamicBitset&
   {
@@ -2138,7 +2466,7 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] other
+   * @param[in] other Another `DynamicBitset` object.
    */
   constexpr func operator&=(const DynamicBitset& other) -> DynamicBitset&
   {
@@ -2163,7 +2491,7 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] other
+   * @param[in] other Another `DynamicBitset` object.
    */
   constexpr func operator|=(const DynamicBitset& other) -> DynamicBitset&
   {
@@ -2189,7 +2517,7 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] other
+   * @param[in] other Another `DynamicBitset` object.
    */
   constexpr func operator^=(const DynamicBitset& other) -> DynamicBitset&
   {
@@ -2215,7 +2543,7 @@ class DynamicBitset
 
   /**
    * @public
-   * @returns New `DynamicBitset` copy with all reversed bits.
+   * @return New `DynamicBitset` copy with all reversed bits.
    * @throws std::out_of_range If the container is empty `Empty() == true`.
    */
   [[nodiscard]] constexpr func operator~() const -> DynamicBitset
@@ -2241,9 +2569,24 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] bitOffset.
+   * @brief Performs logical right bitwise shift on `DynamicBitset`.
+   * @details This operator performs logical right bitwise shift operation
+   *          with similiar semantics as builtins unsigned integral types.
+   * 
+   * @param[in] bitOffset Unsigned integral value representing bitwise shift offset.
+   * @return Reference to `this` object.
    * 
    * @throws std::out_of_range If the container is empty `Empty() == true`.
+   * 
+   * @note Complexity: O(n)
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{8, 0xff}; // Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits >>= 4; // Sequence: [0, 0, 0, 0, 1, 1, 1, 1]
+   * bits.Set(); // Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits >>= 8; // Sequence: [0, 0, 0, 0, 0, 0, 0, 0]
+   * @endcode
    */
   constexpr func operator>>=(sizeType bitOffset) -> DynamicBitset&
   {
@@ -2281,7 +2624,25 @@ class DynamicBitset
 
   /**
    * @public
-   * @param[in] bitOffset
+   * @brief Performs logical left bitwise shift on `DynamicBitset`.
+   * @details This operator performs logical left bitwise shift operation
+   *          with similiar semantics as builtins unsigned integral types.
+   * 
+   * @param[in] bitOffset Unsigned integral value representing bitwise shift offset.
+   * @return Reference to `this` object.
+   * 
+   * @throws std::out_of_range If the container is empty `Empty() == true`.
+   * @see Empty()
+   * 
+   * @note Complexity: O(n)
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{8, 0xff}; // Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits <<= 4; // Sequence: [1, 1, 1, 1, 0, 0, 0, 0]
+   * bits.Set(); // Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
+   * bits <<= 8; // Sequence: [0, 0, 0, 0, 0, 0, 0, 0]
+   * @endcode
    */
   constexpr func operator<<=(sizeType bitOffset) -> DynamicBitset&
   {
@@ -2318,6 +2679,72 @@ class DynamicBitset
     }
 
     return *this;
+  }
+
+  /**
+   * @public
+   * @brief Performs bitwise comparison between two `DynamicBitset` objects.
+   * 
+   * @param[in] other
+   * @return `true` If `lhs` bits is equal to `rhs`, `false` otherwise.
+   * 
+   * @throws None (no-throw guarantee).
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits{4, 0xff};
+   * bits::DynamicBitset anotherBits{bits};
+   * assert(bits == anotherBits);
+   * @endcode
+   */
+  [[nodiscard]] constexpr func operator==(const DynamicBitset& other) const noexcept -> bool
+  {
+    BITS_DYNAMIC_BITSET_ASSERT(this != &other);
+
+    if (bits_ != other.bits_)
+    {
+      return false;
+    }
+    pointer firstSelf{storage_};
+    pointer firstOther{other.storage_};
+    pointer end{storage_ + CalculateCapacity(bits_) - 1};
+    [[likely]]
+    while (firstSelf < end)
+    {
+      if (*firstSelf++ != *firstOther++)
+      {
+        return false;
+      }
+    }
+    const blockType remainingBits{static_cast<blockType>(bits_ & BlockInfo::byteModConst)};
+    for (blockType currentBit{1}; currentBit <= remainingBits; currentBit <<= 1)
+    {
+      if (!((*firstSelf & currentBit) & *firstOther))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * @public
+   * @brief Comp two bitsets
+   * @param[in] other Second `DynamicBitset` operand.
+   * @return `true` If `this` bitset is not equal to `other`, `false` otherwise.
+   * 
+   * @throws None (no-throw guarantee).
+   * 
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset a{16, 0xff};
+   * bits::DynamicBitset b{std::move(a)};
+   * assert(a != b);
+   * @endcode
+   */
+  [[nodiscard]] constexpr func operator!=(const DynamicBitset& other) const noexcept -> bool
+  {
+    return !(*this == other);
   }
 
   /**
@@ -2363,64 +2790,8 @@ class DynamicBitset
   [[no_unique_address]] allocatorType alloc_;
 };
 
-} /* End namespace bits */
+END_BITS_NAMESPACE
 
-/**
- * @tparam Block Unsigned integral type for bit storage (e.g., `uint8_t`).
- * @tparam Alloc Allocator type meeting Cpp17Allocator requirements.
- * 
- * @param[in] lhs First `DynamicBitset` operand.
- * @param[in] rhs Second `DynamicBitset` operand.
- * @returns `true` If `lhs` bits is equal to `rhs`, `false` otherwise.
- * 
- * @throws None (no-throw guarantee).
- */
-template<typename Block, typename Alloc>
-[[nodiscard]] constexpr func operator==(
-    const bits::DynamicBitset<Block, Alloc>& lhs,
-    const bits::DynamicBitset<Block, Alloc>& rhs
-) noexcept -> bool
-{
-  BITS_DYNAMIC_BITSET_ASSERT(&lhs != &rhs);
-
-  if (lhs.size() != rhs.size())
-  {
-    return false;
-  }
-
-  auto beginLhs{lhs.Data()};
-  auto end{beginLhs + lhs.Capacity()};
-  auto beginRhs{rhs.Data()};
-
-  [[likely]]
-  while (beginLhs < end)
-  {
-    if (*beginLhs++ != *beginRhs++)
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * @tparam Block Unsigned integral type for bit storage (e.g., `uint8_t`).
- * @tparam Alloc Allocator type meeting Cpp17Allocator requirements.
- * 
- * @param[in] lhs First `DynamicBitset` operand.
- * @param[in] rhs Second `DynamicBitset` operand.
- * @returns `true` If `lhs` bits is not equal to `rhs`, `false` otherwise.
- * 
- * @throws None (no-throw guarantee).
- */
-template<typename Block, typename Alloc>
-[[nodiscard]] constexpr func operator!=(
-    const bits::DynamicBitset<Block, Alloc>& lhs,
-    const bits::DynamicBitset<Block, Alloc>& rhs
-) noexcept -> bool
-{
-  return !(lhs == rhs);
-}
 
 /**
  * @brief Performs a bitwise AND between two `DynamicBitset` objects.
