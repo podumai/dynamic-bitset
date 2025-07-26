@@ -1,9 +1,9 @@
-add_executable(${PROJECT_NAME}-EXE)
-string(TOLOWER ${PROJECT_NAME}-EXE project_headers)
+add_executable(${PROJECT_NAME}_EXE)
+string(TOLOWER ${PROJECT_NAME}_usage_h usage_headers)
 target_sources(
-    ${PROJECT_NAME}-EXE
+    ${PROJECT_NAME}_EXE
       PRIVATE
-        FILE_SET project_headers
+        FILE_SET ${usage_headers}
         TYPE HEADERS
         BASE_DIRS
           ${CMAKE_CURRENT_SOURCE_DIR}/include/
@@ -13,7 +13,7 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 target_compile_features(
-    ${PROJECT_NAME}-EXE
+    ${PROJECT_NAME}_EXE
       PRIVATE
         cxx_std_23
       INTERFACE
