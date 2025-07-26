@@ -1,22 +1,5 @@
 #include <benchmark/benchmark.h>
-#include <dynamic_bitset/dynamic_bitset.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <vector>
-
-#if defined(BITS_DYNAMIC_BITSET_TEST)
-  #define TEST_UNIT bits::DynamicBitset<size_t>
-  #define PUSH_BACK(EXPR) PushBack(EXPR)
-#elif defined(BOOST_DYNAMIC_BITSET_TEST)
-  #define TEST_UNIT boost::dynamic_bitset<size_t>
-#elif defined(STD_VECTOR_BOOL_TEST)
-  #define TEST_UNIT std::vector<bool>
-#elif defined(UNKNOWN_TEST_UNIT)
-  #define TEST_UNIT void
-#endif
-
-#if defined(BOOST_DYNAMIC_BITSET_TEST) || defined(STD_VECTOR_BOOL_TEST)
-  #define PUSH_BACK(EXPR) push_back(EXPR)
-#endif
 
 namespace
 {
@@ -25,16 +8,16 @@ auto EmptyTest(benchmark::State& state) -> void
 {
   for (auto _ : state)
   {
-    TEST_UNIT unit;
+    boost::dynamic_bitset unit;
   }
 }
 
 auto CopyTest(benchmark::State& state) -> void
 {
-  TEST_UNIT unit(1'000'000);
+  boost::dynamic_bitset<size_t> unit(1'000'000);
   for (auto _ : state)
   {
-    TEST_UNIT copiedUnit(unit);
+    boost::dynamic_bitset copiedUnit{unit};
   }
 }
 
@@ -42,17 +25,17 @@ auto EmptyPushBackTest(benchmark::State& state) -> void
 {
   for (auto _ : state)
   {
-    TEST_UNIT unit;
+    boost::dynamic_bitset unit;
     for (int i{}; i < 1'000'000; ++i)
     {
-      unit.PUSH_BACK((i & 1) == 0);
+      unit.push_back(!(i & 1));
     }
   }
 }
 
 auto SubscriptTraverseTest(benchmark::State& state) -> void
 {
-  TEST_UNIT unit(1'000'000);
+  boost::dynamic_bitset<size_t> unit(1'000'000);
   for (auto _ : state)
   {
     for (int i{}; i < 1'000'000; ++i)
@@ -64,8 +47,8 @@ auto SubscriptTraverseTest(benchmark::State& state) -> void
 
 auto BitwiseANDoperatorTest(benchmark::State& state) -> void
 {
-  TEST_UNIT unit(1'000'000);
-  TEST_UNIT anotherUnit(1'000'000);
+  boost::dynamic_bitset<size_t> unit(1'000'000);
+  boost::dynamic_bitset<size_t> anotherUnit(1'000'000);
   for (auto _ : state)
   {
     unit &= anotherUnit;
