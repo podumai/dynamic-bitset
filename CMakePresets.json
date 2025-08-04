@@ -1,0 +1,114 @@
+{
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 30,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base-debug",
+      "hidden": true,
+      "displayName": "[Base] configuration (Debug)",
+      "description": "Base configuration for Debug build (Abstract)",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "base-release",
+      "hidden": true,
+      "displayName": "[Base] configuration (Release)",
+      "description": "Base configuration for Release build (Abstract)",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "base-ninja",
+      "hidden": true,
+      "displayName": "[Base] configuration (Ninja)",
+      "description": "Base configuration using Ninja generator",
+      "generator": "Ninja"
+    },
+    {
+      "name": "base-unix-make",
+      "hidden": true,
+      "displayName": "[Base] configuration (Unix Make)",
+      "description": "Base configuration using Unix MakeFiles generator",
+      "generator": "Unix MakeFiles"
+    },
+    {
+      "name": "debug-ninja",
+      "hidden": false,
+      "displayName": "[Debug] configuration (Ninja)",
+      "description": "Debug configuration using Ninja generator",
+      "inherits": [
+        "base-debug",
+        "base-ninja"
+      ]
+    },
+    {
+      "name": "debug-unix-make",
+      "hidden": false,
+      "displayName": "[Debug] configuration (Unix MakeFiles)",
+      "description": "Debug configuration using Unix MakeFiles generator",
+      "inherits": [
+        "base-debug",
+        "base-unix-make"
+      ]
+    },
+    {
+      "name": "release-ninja",
+      "hidden": false,
+      "displayName": "[Release] configuration (Ninja)",
+      "description": "Release configuration using Ninja generator",
+      "inherits": [
+        "base-release",
+        "base-ninja"
+      ]
+    },
+    {
+      "name": "release-unix-make",
+      "hidden": false,
+      "displayName": "[Release] configuration (Unix MakeFiles)",
+      "description": "Release configuration using Unix MakeFiles generator",
+      "inherits": [
+        "base-release",
+        "base-unix-make"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "base-build",
+      "hidden": true,
+      "displayName": "[Base] Build configuration (Abstract)",
+      "description": "Base build configuration (Abstract)",
+      "jobs": 8,
+      "verbose": false
+    },
+    {
+      "name": "debug-ninja",
+      "hidden": false,
+      "displayName": "[Debug] Build configuration (Ninja)",
+      "description": "Debug build configuration using Ninja generator",
+      "configurePreset": "debug-ninja",
+      "inherits": [
+        "base-build"
+      ]
+    },
+    {
+      "name": "debug-unix-make",
+      "hidden": false,
+      "displayName": "[Debug] Build configuration (Unix MakeFile)",
+      "description": "Debug build configuration using Unix MakeFile",
+      "configurePreset": "debug-unix-make",
+      "inherits": [
+        "base-build"
+      ]
+    }
+  ]
+}
