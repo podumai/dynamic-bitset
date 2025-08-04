@@ -14,8 +14,10 @@ if(benchmark_FOUND)
           TYPE HEADERS
           BASE_DIRS
             "${CMAKE_SOURCE_DIR}/dynamic-bitset/include"
+            "${CMAKE_SOURCE_DIR}/benchmark/include"
           FILES
             "${CMAKE_SOURCE_DIR}/dynamic-bitset/include/dynamic_bitset/dynamic_bitset.hpp"
+            "${CMAKE_SOURCE_DIR}/benchmark/include/dynamic_bitset/benchmark/benchmark.hpp"
         PRIVATE
           "${CMAKE_CURRENT_SOURCE_DIR}/bits_dbitset.cpp"
   )
