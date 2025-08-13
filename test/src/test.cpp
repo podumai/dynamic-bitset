@@ -1,285 +1,335 @@
 #include <gtest/gtest.h>
-#include <memory_resource>
+
 #include <cstdint>
 #include <dynamic_bitset/dynamic_bitset.hpp>
+#include <memory_resource>
 
-class VECTOR_TEST_FIXTURE
-    : public ::testing::Test
+class VECTOR_TEST_FIXTURE : public testing::Test
 {
  protected:
   bits::DynamicBitset<> emptyVector;
-  bits::DynamicBitset<> filledVector{16, 0xffff};
+  bits::DynamicBitset<> filledVector{16, 0xff'ff};
 };
 
-TEST_F(VECTOR_TEST_FIXTURE, CONSTRUCTOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  CONSTRUCTOR_TEST
+)
 {
-  EXPECT_EQ(0, emptyVector.size())
-  << "empty object must be initialized with zero size";
-  EXPECT_EQ(0, emptyVector.capacity())
-  << "empty object must be initialized with zero capacity";
-  EXPECT_EQ(nullptr, emptyVector.data())
-  << "empty object must be initialized with empty storage";
+  EXPECT_EQ(0, emptyVector.Size()) << "empty object must be initialized with zero size";
+  EXPECT_EQ(0, emptyVector.Capacity()) << "empty object must be initialized with zero capacity";
+  EXPECT_EQ(nullptr, emptyVector.Data()) << "empty object must be initialized with empty storage";
 
-  EXPECT_EQ(16, filledVector.size());
-  EXPECT_EQ(64, filledVector.capacity());
-  ASSERT_NE(nullptr, filledVector.data());
-  EXPECT_EQ("1111111111111111", filledVector.to_string())
-  << "Vector was initialized with 0xffff which is 0b1111111111111111";
+  EXPECT_EQ(16, filledVector.Size());
+  EXPECT_EQ(64, filledVector.Capacity());
+  ASSERT_NE(nullptr, filledVector.Data());
+  EXPECT_EQ("1111111111111111", filledVector.ToString())
+    << "Vector was initialized with 0xffff which is 0b1111111111111111";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, COPY_CONSTRUCTOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  COPY_CONSTRUCTOR_TEST
+)
 {
   bits::DynamicBitset<> testVector{filledVector};
 
-  EXPECT_EQ(testVector.size(), filledVector.size());
-  EXPECT_EQ(testVector.capacity(), filledVector.capacity());
-  EXPECT_EQ(testVector.to_string(), filledVector.to_string());
+  EXPECT_EQ(testVector.Size(), filledVector.Size());
+  EXPECT_EQ(testVector.Capacity(), filledVector.Capacity());
+  EXPECT_EQ(testVector.ToString(), filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, MOVE_CONSTRUCTOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  MOVE_CONSTRUCTOR_TEST
+)
 {
   auto testVector(std::move(filledVector));
 
-  EXPECT_EQ(16, testVector.size());
-  EXPECT_EQ(64, testVector.capacity());
-  ASSERT_NE(nullptr, testVector.data());
-  EXPECT_EQ("1111111111111111", testVector.to_string());
+  EXPECT_EQ(16, testVector.Size());
+  EXPECT_EQ(64, testVector.Capacity());
+  ASSERT_NE(nullptr, testVector.Data());
+  EXPECT_EQ("1111111111111111", testVector.ToString());
 
-  EXPECT_EQ(emptyVector.size(), filledVector.size())
-  << "Moved object must be empty with zero size";
-  EXPECT_EQ(emptyVector.capacity(), filledVector.capacity())
-  << "Moved object must be empty with zero capacity";
-  EXPECT_EQ(emptyVector.data(), filledVector.data())
-  << "Moved object must be empty with nullptr storage";
+  EXPECT_EQ(emptyVector.Size(), filledVector.Size()) << "Moved object must be empty with zero size";
+  EXPECT_EQ(emptyVector.Capacity(), filledVector.Capacity()) << "Moved object must be empty with zero capacity";
+  EXPECT_EQ(emptyVector.Data(), filledVector.Data()) << "Moved object must be empty with nullptr storage";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, SIZE_METHOD_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  SIZE_METHOD_TEST
+)
 {
-  EXPECT_EQ(0, emptyVector.size());
-  EXPECT_EQ(16, filledVector.size());
+  EXPECT_EQ(0, emptyVector.Size());
+  EXPECT_EQ(16, filledVector.Size());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, CAPACITY_METHOD_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  CAPACITY_METHOD_TEST
+)
 {
-  EXPECT_EQ(0, emptyVector.capacity());
-  EXPECT_EQ(64, filledVector.capacity());
+  EXPECT_EQ(0, emptyVector.Capacity());
+  EXPECT_EQ(64, filledVector.Capacity());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, DATA_METHOD_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  DATA_METHOD_TEST
+)
 {
-  EXPECT_EQ(nullptr, emptyVector.data());
-  EXPECT_NE(nullptr, filledVector.data());
+  EXPECT_EQ(nullptr, emptyVector.Data());
+  EXPECT_NE(nullptr, filledVector.Data());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, MAX_SIZE_METHOD_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  MAX_SIZE_METHOD_TEST
+)
 {
-  EXPECT_EQ(std::numeric_limits<typename decltype(emptyVector)::sizeType>::max(), emptyVector.max_size());
+  EXPECT_EQ(std::numeric_limits<typename decltype(emptyVector)::sizeType>::max(), emptyVector.MaxSize());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, COUNT_METHOD_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  COUNT_METHOD_TEST
+)
 {
-  EXPECT_EQ(0, emptyVector.count())
-  << "count on empty object must return zero";
-  EXPECT_EQ(16, filledVector.count());
+  EXPECT_EQ(0, emptyVector.Count()) << "count on empty object must return zero";
+  EXPECT_EQ(16, filledVector.Count());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, RESERVE_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  RESERVE_METHOD
+)
 {
-  EXPECT_THROW(
-      emptyVector.reserve(std::numeric_limits<size_t>::max()),
-      std::bad_array_new_length
-  );
-  emptyVector.reserve(10);
+  EXPECT_THROW(emptyVector.Reserve(std::numeric_limits<size_t>::max()), std::bad_array_new_length);
+  emptyVector.Reserve(10);
 
-  EXPECT_EQ(0, emptyVector.size());
-  ASSERT_EQ(640, emptyVector.capacity())
-  << "Invalid reservation of space which must be: previous + new <=> 0 + 10 = 10";
-  ASSERT_NE(nullptr, emptyVector.data());
+  EXPECT_EQ(0, emptyVector.Size());
+  ASSERT_EQ(
+    640, emptyVector.Capacity()
+  ) << "Invalid reservation of space which must be: previous + new <=> 0 + 10 = 10";
+  ASSERT_NE(nullptr, emptyVector.Data());
 
-  filledVector.reserve(10);
+  filledVector.Reserve(10);
 
-  EXPECT_EQ(16, filledVector.size());
-  ASSERT_EQ(704, filledVector.capacity())
-  << "Invalid reservation of space which must be: previous + new <=> 2 + 10 = 12";
-  ASSERT_NE(nullptr, filledVector.data());
+  EXPECT_EQ(16, filledVector.Size());
+  ASSERT_EQ(704, filledVector.Capacity())
+    << "Invalid reservation of space which must be: previous + new <=> 2 + 10 = 12";
+  ASSERT_NE(nullptr, filledVector.Data());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, SHRINK_TO_FIT_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  SHRINK_TO_FIT_METHOD
+)
 {
-  emptyVector.reserve(10);
-  emptyVector.shrink_to_fit();
+  emptyVector.Reserve(10);
+  emptyVector.ShrinkToFit();
 
-  EXPECT_EQ(0, emptyVector.size())
-  << "Shrink to fit must not modify the number of bits";
-  EXPECT_EQ(0, emptyVector.capacity())
-  << "Zero number of bits means empty object and in this case it must clear the object";
-  EXPECT_EQ(nullptr, emptyVector.data())
-  << "Nullptr must be set after cleaning the object";
+  EXPECT_EQ(0, emptyVector.Size()) << "Shrink to fit must not modify the number of bits";
+  EXPECT_EQ(
+    0, emptyVector.Capacity()
+  ) << "Zero number of bits means empty object and in this case it must clear the object";
+  EXPECT_EQ(nullptr, emptyVector.Data()) << "Nullptr must be set after cleaning the object";
 
-  filledVector.shrink_to_fit();
+  filledVector.ShrinkToFit();
 
-  EXPECT_EQ(16, filledVector.size())
-  << "Shrink to fit must not modify the number of bits";
-  EXPECT_EQ(64, filledVector.capacity())
-  << "If object does not contain extra space it must not change object state";
-  EXPECT_NE(nullptr, filledVector.data())
-  << "Nullptr must be set if object is empty but 'filledVector' is not";
+  EXPECT_EQ(16, filledVector.Size()) << "Shrink to fit must not modify the number of bits";
+  EXPECT_EQ(64, filledVector.Capacity()) << "If object does not contain extra space it must not change object state";
+  EXPECT_NE(nullptr, filledVector.Data()) << "Nullptr must be set if object is empty but 'filledVector' is not";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, ANY_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  ANY_METHOD
+)
 {
-  EXPECT_EQ(false, emptyVector.any())
-  << "empty object can not contain any bits";
-  EXPECT_EQ(true, filledVector.any());
+  EXPECT_EQ(false, emptyVector.Any()) << "empty object can not contain any bits";
+  EXPECT_EQ(true, filledVector.Any());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, NONE_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  NONE_METHOD
+)
 {
-  EXPECT_EQ(true, emptyVector.none())
-  << "empty object can not contain any bits";
-  EXPECT_EQ(false, filledVector.none());
+  EXPECT_EQ(true, emptyVector.None()) << "empty object can not contain any bits";
+  EXPECT_EQ(false, filledVector.None());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, EMPTY_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  EMPTY_METHOD
+)
 {
-  EXPECT_EQ(true, emptyVector.empty())
-  << "empty object can not contain any bits";
-  EXPECT_EQ(false, filledVector.empty());
+  EXPECT_EQ(true, emptyVector.Empty()) << "empty object can not contain any bits";
+  EXPECT_EQ(false, filledVector.Empty());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, CLEAR_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  CLEAR_METHOD
+)
 {
-  emptyVector.clear();
-  filledVector.clear();
+  emptyVector.Clear();
+  filledVector.Clear();
 
-  EXPECT_EQ(emptyVector.size(), filledVector.size())
-  << "Every object must be empty after clear";
-  EXPECT_EQ(emptyVector.capacity(), filledVector.capacity())
-  << "Every object must be empty after clear";
-  EXPECT_EQ(emptyVector.data(), filledVector.data())
-  << "Every object must be empty after clear";
+  EXPECT_EQ(emptyVector.Size(), filledVector.Size()) << "Every object must be empty after clear";
+  EXPECT_EQ(emptyVector.Capacity(), filledVector.Capacity()) << "Every object must be empty after clear";
+  EXPECT_EQ(emptyVector.Data(), filledVector.Data()) << "Every object must be empty after clear";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, RESIZE_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  RESIZE_METHOD
+)
 {
-  emptyVector.resize(10, false);
-  filledVector.resize(20, true);
+  emptyVector.Resize(10, false);
+  filledVector.Resize(20, true);
 
-  EXPECT_EQ(10, emptyVector.size())
-  << "resize must modify the number of bits";
-  EXPECT_EQ(64, emptyVector.capacity())
-  << "resize must modify the number of bytes";
-  ASSERT_NE(nullptr, emptyVector.data());
-  EXPECT_EQ(true, emptyVector.none())
-  << "Bits must be unset due to second parameter -> false";
+  EXPECT_EQ(10, emptyVector.Size()) << "'Resize' must modify the number of bits";
+  EXPECT_EQ(64, emptyVector.Capacity()) << "'Resize' must modify the number of bytes";
+  ASSERT_NE(nullptr, emptyVector.Data());
+  EXPECT_EQ(true, emptyVector.None()) << "Bits must be unset due to second parameter -> false";
 
-  EXPECT_EQ(20, filledVector.size());
-  EXPECT_EQ(64, filledVector.capacity());
-  ASSERT_NE(nullptr, filledVector.data());
-  EXPECT_EQ(20, filledVector.count())
-  << "New bits must be set due to second parameter -> true";
+  EXPECT_EQ(20, filledVector.Size());
+  EXPECT_EQ(64, filledVector.Capacity());
+  ASSERT_NE(nullptr, filledVector.Data());
+  EXPECT_EQ(20, filledVector.Count()) << "New bits must be set due to second parameter -> true";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, PUSH_BACK_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  PUSH_BACK_METHOD
+)
 {
   for (std::size_t i{}; i < 10; ++i)
   {
-    emptyVector.push_back(true);
-    filledVector.push_back(true);
+    emptyVector.PushBack(true);
+    filledVector.PushBack(true);
   }
 
-  EXPECT_EQ(10, emptyVector.count());
-  EXPECT_EQ(26, filledVector.count());
+  EXPECT_EQ(10, emptyVector.Count());
+  EXPECT_EQ(26, filledVector.Count());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, POP_BACK_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  POP_BACK_METHOD
+)
 {
-  for (std::size_t i {}; i < 16; ++i)
+  for (std::size_t i{}; i < 16; ++i)
   {
-    filledVector.pop_back();
+    filledVector.PopBack();
   }
-  EXPECT_EQ(0, filledVector.size());
+  EXPECT_EQ(0, filledVector.Size());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, SET_INDEX_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  SET_INDEX_METHOD
+)
 {
-  EXPECT_THROW(emptyVector.set(10), std::out_of_range);
-  
+  EXPECT_THROW(emptyVector.Set(10), std::out_of_range);
+
   for (std::size_t i{}; i < 4; ++i)
   {
-    filledVector.set(i, false);
+    filledVector.Set(i, false);
   }
-  
-  EXPECT_EQ("0000111111111111", filledVector.to_string());
+
+  EXPECT_EQ("0000111111111111", filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, SET_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  SET_METHOD
+)
 {
-  EXPECT_THROW(emptyVector.set(), std::out_of_range);
+  EXPECT_THROW(emptyVector.Set(), std::out_of_range);
 
   bits::DynamicBitset<> testVector{16};
-  testVector.set();
+  testVector.Set();
 
-  EXPECT_EQ(false, testVector.none())
-  << "set method must set all bits to true";
+  EXPECT_EQ(false, testVector.None()) << "'Set' method must set all bits to true";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, RESET_INDEX_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  RESET_INDEX_METHOD
+)
 {
-  EXPECT_THROW(emptyVector.reset(10), std::out_of_range);
+  EXPECT_THROW(emptyVector.Reset(10), std::out_of_range);
 
   for (std::size_t i{}; i < 4; ++i)
   {
-    filledVector.reset(i);
+    filledVector.Reset(i);
   }
-  
-  EXPECT_EQ("0000111111111111", filledVector.to_string());
+
+  EXPECT_EQ("0000111111111111", filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, RESET_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  RESET_METHOD
+)
 {
-  EXPECT_THROW(emptyVector.reset(), std::out_of_range);
+  EXPECT_THROW(emptyVector.Reset(), std::out_of_range);
 
-  filledVector.reset();
+  filledVector.Reset();
 
-  EXPECT_EQ(true, filledVector.none())
-  << "reset method must set all bits to false";
+  EXPECT_EQ(true, filledVector.None()) << "Reset method must set all bits to false";
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, FLIP_INDEX_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  FLIP_INDEX_METHOD
+)
 {
-  EXPECT_THROW(emptyVector.flip(10), std::out_of_range);
+  EXPECT_THROW(emptyVector.Flip(10), std::out_of_range);
 
   for (std::size_t i{}; i < 4; ++i)
   {
-    filledVector.flip(i);
+    filledVector.Flip(i);
   }
-  
-  EXPECT_EQ("0000111111111111", filledVector.to_string());
+
+  EXPECT_EQ("0000111111111111", filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, FLIP_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  FLIP_METHOD
+)
 {
-  EXPECT_THROW(emptyVector.flip(), std::out_of_range);
+  EXPECT_THROW(emptyVector.Flip(), std::out_of_range);
 
-  filledVector.flip();
+  filledVector.Flip();
 
-  EXPECT_EQ(true, filledVector.none());
+  EXPECT_EQ(true, filledVector.None());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, SWAP_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  SWAP_METHOD
+)
 {
-  emptyVector.swap(filledVector);
+  emptyVector.Swap(filledVector);
 
-  EXPECT_EQ(16, emptyVector.size());
-  EXPECT_EQ(64, emptyVector.capacity());
-  EXPECT_EQ(16, emptyVector.count());
-  EXPECT_EQ(0, filledVector.size());
-  EXPECT_EQ(0, filledVector.capacity());
-  EXPECT_EQ(nullptr, filledVector.data());
+  EXPECT_EQ(16, emptyVector.Size());
+  EXPECT_EQ(64, emptyVector.Capacity());
+  EXPECT_EQ(16, emptyVector.Count());
+  EXPECT_EQ(0, filledVector.Size());
+  EXPECT_EQ(0, filledVector.Capacity());
+  EXPECT_EQ(nullptr, filledVector.Data());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, SUBSCRIPT_OPERATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  SUBSCRIPT_OPERATOR_TEST
+)
 {
   for (std::size_t i{}; i < 10; ++i)
   {
@@ -291,205 +341,249 @@ TEST_F(VECTOR_TEST_FIXTURE, SUBSCRIPT_OPERATOR_TEST)
   }
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, AT_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  AT_METHOD
+)
 {
-  EXPECT_THROW((void)emptyVector.at(10), std::out_of_range);
-  EXPECT_THROW((void)filledVector.at(20), std::out_of_range);
+  EXPECT_THROW((void) emptyVector.At(10), std::out_of_range);
+  EXPECT_THROW((void) filledVector.At(20), std::out_of_range);
 
-  EXPECT_EQ(true, filledVector.at(0));
-  filledVector.reset(0);
-  EXPECT_EQ(false, filledVector.at(0));
+  EXPECT_EQ(true, filledVector.At(0));
+  filledVector.Reset(0);
+  EXPECT_EQ(false, filledVector.At(0));
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, FRONT_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  FRONT_METHOD
+)
 {
-  EXPECT_EQ(true, filledVector.front());
-  filledVector.reset(0);
-  EXPECT_EQ(false, filledVector.front());
+  EXPECT_EQ(true, filledVector.Front());
+  filledVector.Reset(0);
+  EXPECT_EQ(false, filledVector.Front());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, BACK_METHOD)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  BACK_METHOD
+)
 {
-  EXPECT_EQ(true, filledVector.back());
-  filledVector.reset(15);
-  EXPECT_EQ(false, filledVector.back());
+  EXPECT_EQ(true, filledVector.Back());
+  filledVector.Reset(15);
+  EXPECT_EQ(false, filledVector.Back());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, COPY_ASSIGNMENT_OPERATOR)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  COPY_ASSIGNMENT_OPERATOR
+)
 {
   emptyVector = filledVector;
 
-  EXPECT_EQ(emptyVector.size(), filledVector.size());
-  EXPECT_EQ(emptyVector.capacity(), filledVector.capacity());
-  ASSERT_NE(nullptr, emptyVector.data());
-  EXPECT_EQ(emptyVector.to_string(), filledVector.to_string());
+  EXPECT_EQ(emptyVector.Size(), filledVector.Size());
+  EXPECT_EQ(emptyVector.Capacity(), filledVector.Capacity());
+  ASSERT_NE(nullptr, emptyVector.Data());
+  EXPECT_EQ(emptyVector.ToString(), filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, MOVE_ASSIGNMENT_OPERATOR)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  MOVE_ASSIGNMENT_OPERATOR
+)
 {
   emptyVector = std::move(filledVector);
 
-  EXPECT_EQ(16, emptyVector.size());
-  EXPECT_EQ(64, emptyVector.capacity());
-  EXPECT_EQ(16, emptyVector.count());
-  EXPECT_EQ(0, filledVector.size());
-  EXPECT_EQ(0, filledVector.capacity());
-  EXPECT_EQ(nullptr, filledVector.data());
+  EXPECT_EQ(16, emptyVector.Size());
+  EXPECT_EQ(64, emptyVector.Capacity());
+  EXPECT_EQ(16, emptyVector.Count());
+  EXPECT_EQ(0, filledVector.Size());
+  EXPECT_EQ(0, filledVector.Capacity());
+  EXPECT_EQ(nullptr, filledVector.Data());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, BITWISE_AND_ASSIGNMENT_OPERATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  BITWISE_AND_ASSIGNMENT_OPERATOR_TEST
+)
 {
   EXPECT_THROW(emptyVector &= filledVector, std::invalid_argument);
 
-  emptyVector.resize(16, true);
+  emptyVector.Resize(16, true);
   filledVector &= emptyVector;
 
-  ASSERT_EQ(16, filledVector.size());
-  ASSERT_EQ(64, filledVector.capacity());
-  ASSERT_EQ(16, filledVector.count());
+  ASSERT_EQ(16, filledVector.Size());
+  ASSERT_EQ(64, filledVector.Capacity());
+  ASSERT_EQ(16, filledVector.Count());
 
-  emptyVector.reset();
+  emptyVector.Reset();
   filledVector &= emptyVector;
 
-  EXPECT_EQ(16, filledVector.size());
-  EXPECT_EQ(64, filledVector.capacity());
-  EXPECT_EQ(true, filledVector.none());
+  EXPECT_EQ(16, filledVector.Size());
+  EXPECT_EQ(64, filledVector.Capacity());
+  EXPECT_EQ(true, filledVector.None());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, BITWISE_OR_ASSIGNMENT_OPERATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  BITWISE_OR_ASSIGNMENT_OPERATOR_TEST
+)
 {
   EXPECT_THROW(emptyVector |= filledVector, std::invalid_argument);
 
-  emptyVector.resize(16, true);
+  emptyVector.Resize(16, true);
   filledVector |= emptyVector;
 
-  ASSERT_EQ(16, filledVector.size());
-  ASSERT_EQ(64, filledVector.capacity());
-  ASSERT_EQ(16, filledVector.count());
+  ASSERT_EQ(16, filledVector.Size());
+  ASSERT_EQ(64, filledVector.Capacity());
+  ASSERT_EQ(16, filledVector.Count());
 
-  emptyVector.reset();
+  emptyVector.Reset();
   filledVector |= emptyVector;
 
-  EXPECT_EQ(16, filledVector.size());
-  EXPECT_EQ(64, filledVector.capacity());
-  EXPECT_EQ(false, filledVector.none());
+  EXPECT_EQ(16, filledVector.Size());
+  EXPECT_EQ(64, filledVector.Capacity());
+  EXPECT_EQ(false, filledVector.None());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, BITWISE_XOR_ASSIGNMENT_OPERATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  BITWISE_XOR_ASSIGNMENT_OPERATOR_TEST
+)
 {
   EXPECT_THROW(emptyVector ^= filledVector, std::invalid_argument);
 
-  emptyVector.resize(16, true);
+  emptyVector.Resize(16, true);
   filledVector ^= emptyVector;
 
-  ASSERT_EQ(16, filledVector.size());
-  ASSERT_EQ(64, filledVector.capacity());
-  ASSERT_EQ(true, filledVector.none());
+  ASSERT_EQ(16, filledVector.Size());
+  ASSERT_EQ(64, filledVector.Capacity());
+  ASSERT_EQ(true, filledVector.None());
 
   filledVector ^= emptyVector;
 
-  EXPECT_EQ(16, filledVector.size());
-  EXPECT_EQ(64, filledVector.capacity());
-  EXPECT_EQ(16, filledVector.count());
+  EXPECT_EQ(16, filledVector.Size());
+  EXPECT_EQ(64, filledVector.Capacity());
+  EXPECT_EQ(16, filledVector.Count());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, BITWISE_INVERSE_OPERATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  BITWISE_INVERSE_OPERATOR_TEST
+)
 {
-  EXPECT_THROW((void)~emptyVector, std::out_of_range);
+  EXPECT_THROW((void) ~emptyVector, std::out_of_range);
 
   emptyVector = ~filledVector;
 
-  ASSERT_EQ(16, emptyVector.size());
-  ASSERT_EQ(64, emptyVector.capacity());
-  ASSERT_EQ(true, emptyVector.none());
+  ASSERT_EQ(16, emptyVector.Size());
+  ASSERT_EQ(64, emptyVector.Capacity());
+  ASSERT_EQ(true, emptyVector.None());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, TO_STRING_METHOD_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  TO_STRING_METHOD_TEST
+)
 {
-  EXPECT_EQ("", emptyVector.to_string());
-  EXPECT_EQ("1111111111111111", filledVector.to_string());
+  EXPECT_EQ("", emptyVector.ToString());
+  EXPECT_EQ("1111111111111111", filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, LHS_ASSIGNMENT_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  LHS_ASSIGNMENT_TEST
+)
 {
   EXPECT_THROW(emptyVector >>= 10, std::out_of_range);
 
   filledVector >>= 0;
 
-  ASSERT_EQ(16, filledVector.size());
-  ASSERT_EQ(64, filledVector.capacity());
-  ASSERT_EQ(16, filledVector.count());
+  ASSERT_EQ(16, filledVector.Size());
+  ASSERT_EQ(64, filledVector.Capacity());
+  ASSERT_EQ(16, filledVector.Count());
 
   filledVector >>= 8;
 
-  ASSERT_EQ("0000000011111111", filledVector.to_string());
+  ASSERT_EQ("0000000011111111", filledVector.ToString());
 
   filledVector >>= 8;
 
-  ASSERT_EQ(true, filledVector.none());
+  ASSERT_EQ(true, filledVector.None());
 
-  filledVector.set();
+  filledVector.Set();
   filledVector >>= 20;
 
-  ASSERT_EQ(true, filledVector.none());
+  ASSERT_EQ(true, filledVector.None());
 
-  filledVector.set();
+  filledVector.Set();
   filledVector >>= 5;
 
-  EXPECT_EQ("0000011111111111", filledVector.to_string());
+  EXPECT_EQ("0000011111111111", filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, RHS_ASSIGNMENT_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  RHS_ASSIGNMENT_TEST
+)
 {
   EXPECT_THROW(emptyVector <<= 10, std::out_of_range);
 
   filledVector <<= 0;
 
-  ASSERT_EQ(16, filledVector.size());
-  ASSERT_EQ(64, filledVector.capacity());
-  ASSERT_EQ(16, filledVector.count());
+  ASSERT_EQ(16, filledVector.Size());
+  ASSERT_EQ(64, filledVector.Capacity());
+  ASSERT_EQ(16, filledVector.Count());
 
   filledVector <<= 8;
 
-  ASSERT_EQ("1111111100000000", filledVector.to_string());
+  ASSERT_EQ("1111111100000000", filledVector.ToString());
 
   filledVector <<= 8;
 
-  ASSERT_EQ(true, filledVector.none());
+  ASSERT_EQ(true, filledVector.None());
 
-  filledVector.set();
+  filledVector.Set();
   filledVector <<= 20;
 
-  ASSERT_EQ(true, filledVector.none());
-  filledVector.set();
+  ASSERT_EQ(true, filledVector.None());
+  filledVector.Set();
   filledVector <<= 5;
 
-  EXPECT_EQ("1111111111100000", filledVector.to_string());
+  EXPECT_EQ("1111111111100000", filledVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, COPY_LHS_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  COPY_LHS_TEST
+)
 {
   emptyVector = filledVector << 8;
 
-  ASSERT_EQ("1111111100000000", emptyVector.to_string());
+  ASSERT_EQ("1111111100000000", emptyVector.ToString());
 
   emptyVector = filledVector << 1;
 
-  EXPECT_EQ("1111111111111110", emptyVector.to_string());
+  EXPECT_EQ("1111111111111110", emptyVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, COPY_RHS_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE, COPY_RHS_TEST
+)
 {
   emptyVector = filledVector >> 8;
 
-  ASSERT_EQ("0000000011111111", emptyVector.to_string());
+  ASSERT_EQ("0000000011111111", emptyVector.ToString());
 
   emptyVector = filledVector >> 1;
 
-  EXPECT_EQ("0111111111111111", emptyVector.to_string());
+  EXPECT_EQ("0111111111111111", emptyVector.ToString());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, ADVANCED_LHS_RHS_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  ADVANCED_LHS_RHS_TEST
+)
 {
   for (std::size_t i{}; i < 16; ++i)
   {
@@ -497,7 +591,7 @@ TEST_F(VECTOR_TEST_FIXTURE, ADVANCED_LHS_RHS_TEST)
     ASSERT_EQ(false, filledVector[i]);
   }
 
-  filledVector.set();
+  filledVector.Set();
 
   for (std::size_t i{}; i < 16; ++i)
   {
@@ -505,34 +599,37 @@ TEST_F(VECTOR_TEST_FIXTURE, ADVANCED_LHS_RHS_TEST)
     ASSERT_EQ(false, filledVector[15 - i]);
   }
 
-  filledVector.set();
+  filledVector.Set();
   filledVector >>= 8;
 
-  ASSERT_EQ("0000000011111111", filledVector.to_string());
+  ASSERT_EQ("0000000011111111", filledVector.ToString());
 
   filledVector >>= 3;
 
-  ASSERT_EQ("0000000000011111", filledVector.to_string());
+  ASSERT_EQ("0000000000011111", filledVector.ToString());
 
   filledVector >>= 5;
 
-  ASSERT_EQ(true, filledVector.none());
+  ASSERT_EQ(true, filledVector.None());
 
-  filledVector.set();
+  filledVector.Set();
   filledVector <<= 8;
 
-  ASSERT_EQ("1111111100000000", filledVector.to_string());
+  ASSERT_EQ("1111111100000000", filledVector.ToString());
 
   filledVector <<= 3;
 
-  ASSERT_EQ("1111100000000000", filledVector.to_string());
+  ASSERT_EQ("1111100000000000", filledVector.ToString());
 
   filledVector <<= 5;
 
-  EXPECT_EQ(true, filledVector.none());
+  EXPECT_EQ(true, filledVector.None());
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, ITERATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  ITERATOR_TEST
+)
 {
   for (auto&& iter : filledVector)
   {
@@ -542,18 +639,21 @@ TEST_F(VECTOR_TEST_FIXTURE, ITERATOR_TEST)
   }
 
   for (const auto& iter : filledVector)
+  {
     ASSERT_EQ(false, iter);
+  }
 
-  for ([[maybe_unused]] auto& iter : emptyVector)
-    ASSERT_EQ(false, true)
-    << "Error in for range loop traversing empty object";
-  
-  for ([[maybe_unused]] const auto& iter : emptyVector)
-    ASSERT_EQ(false, true)
-    << "Error in for range loop (const) traversing empty object";
+  for ([[maybe_unused]]
+       auto& iter : emptyVector)
+  {
+    ASSERT_EQ(false, true) << "Error in for range loop traversing empty object";
+  }
 }
 
-TEST_F(VECTOR_TEST_FIXTURE, STRESS_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  STRESS_TEST
+)
 {
   bits::DynamicBitset<> testVector;
 
@@ -561,71 +661,76 @@ TEST_F(VECTOR_TEST_FIXTURE, STRESS_TEST)
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.push_back(true);
+    testVector.PushBack(true);
   }
-  
-  ASSERT_EQ(SIZE, testVector.count());
+
+  ASSERT_EQ(SIZE, testVector.Count());
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.pop_back();
+    testVector.PopBack();
   }
 
-  ASSERT_EQ(0, testVector.size());
+  ASSERT_EQ(0, testVector.Size());
 
-  testVector.shrink_to_fit();
+  testVector.ShrinkToFit();
 
   constexpr std::size_t MID_SIZE{SIZE >> 1};
 
-  testVector.resize(SIZE, true);
+  testVector.Resize(SIZE, true);
 
   testVector >>= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE + 1, testVector.count());
+  ASSERT_EQ(MID_SIZE + 1, testVector.Count());
 
   testVector <<= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE + 1, testVector.count());
+  ASSERT_EQ(MID_SIZE + 1, testVector.Count());
 
-  testVector.clear();
+  testVector.Clear();
 }
 
-std::size_t buffer[1'000];
+std::size_t buffer[1000];
 
-TEST_F(VECTOR_TEST_FIXTURE, TEMPLATE_ALLOCATOR_TEST)
+TEST_F(
+  VECTOR_TEST_FIXTURE,  //
+  TEMPLATE_ALLOCATOR_TEST
+)
 {
-  std::pmr::monotonic_buffer_resource rs{static_cast<void*>(buffer), 1'000};
+  std::pmr::monotonic_buffer_resource rs{static_cast<void*>(buffer), 1000};
   std::pmr::polymorphic_allocator<std::size_t> pAlloc{&rs};
-  bits::DynamicBitset<typename std::allocator_traits<decltype(pAlloc)>::value_type, decltype(pAlloc)> testVector{pAlloc};
+  bits::DynamicBitset<typename std::allocator_traits<decltype(pAlloc)>::value_type, decltype(pAlloc)> testVector{
+    pAlloc
+  };
   constexpr std::size_t SIZE{7200};
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.push_back(true);
+    testVector.PushBack(true);
   }
- 
-  ASSERT_EQ(SIZE, testVector.count());
+
+  ASSERT_EQ(SIZE, testVector.Count());
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.pop_back();
+    testVector.PopBack();
   }
 
-  ASSERT_EQ(true, testVector.none());
+  ASSERT_EQ(true, testVector.None());
 
-  testVector.shrink_to_fit();
+  testVector.ShrinkToFit();
 
   constexpr std::size_t MID_SIZE{SIZE >> 1};
 
-  testVector.resize(SIZE, true);
+  testVector.Resize(SIZE, true);
 
   testVector >>= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE, testVector.count());
+  ASSERT_EQ(MID_SIZE, testVector.Count());
 
   testVector <<= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE, testVector.count());
+  ASSERT_EQ(MID_SIZE, testVector.Count());
 
-  testVector.clear();
+  testVector.Clear();
 }
