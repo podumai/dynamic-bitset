@@ -1,6 +1,6 @@
 Language: Cpp
 DisableFormat: false
-BaseOnStyle: Google
+BasedOnStyle: Google
 LineEnding: LF
 ColumnLimit: 120
 AccessModifierOffset: -1
