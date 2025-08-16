@@ -5,6 +5,14 @@ project(
     LANGUAGES CXX
     DESCRIPTION "Dynamic data structure that represents the collection of bits"
 )
-add_subdirectory(dynamic-bitset)
-add_subdirectory(test)
-add_subdirectory(benchmark)
+
+option(BUILD_TESTS "Build tests for ${PROJECT_NAME} if GTest package exists" ON)
+option(BUILD_BENCHMARKS "Build benchmarks if google benchmark package exists" OFF)
+
+if(BUILD_TESTS)
+  add_subdirectory(test)
+endif()
+
+if(BUILD_BENCHMARKS)
+  add_subdirectory(benchmark)
+endif()
