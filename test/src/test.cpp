@@ -88,7 +88,7 @@ TEST_F(
   MAX_SIZE_METHOD_TEST
 )
 {
-  EXPECT_EQ(std::numeric_limits<typename decltype(emptyVector)::sizeType>::max(), emptyVector.MaxSize());
+  EXPECT_EQ(std::numeric_limits<typename decltype(emptyVector)::SizeType>::max(), emptyVector.MaxSize());
 }
 
 TEST_F(
