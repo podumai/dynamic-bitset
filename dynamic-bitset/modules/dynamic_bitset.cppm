@@ -20,10 +20,6 @@ module;
   #define BITS_DYNAMIC_BITSET_ASSERT(...)
 #endif
 
-#if CHAR_BIT != 8
-  #error "bits::DynamicBitset supports platforms with 8 bits per byte."
-#endif
-
 export module dynamic_bitset;
 
 /**
