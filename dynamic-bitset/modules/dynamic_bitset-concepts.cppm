@@ -6,11 +6,6 @@ module;
 
 export module dynamic_bitset : concepts;
 
-#define BEGIN_EXPORT_PARTITION_CONCEPTS export {
-#define END_EXPORT_PARTITION_CONCEPTS }
-
-// BEGIN_EXPORT_PARTITION_CONCEPTS
-
 /**
  * @brief Validates the passed Block type.
  * @details Validates the passed Block type to be unsigned integral type
@@ -41,5 +36,3 @@ concept IsValidDynamicBitsetAllocatorType =
  */
 template<typename BlockIterator, typename TargetBlock>
 concept IsValidDynamicBitsetBlockIterator = std::is_convertible_v<decltype(*BlockIterator{}), TargetBlock>;
-
-// END_EXPORT_PARTITION_CONCEPTS
