@@ -40,7 +40,7 @@
   #define COUNT_METHOD() count()
   #define SWAP_METHOD(bitset) swap(bitset)
   #define TO_STRING_METHOD() to_string()
-  #define EMPTY_METHOD empty()
+  #define EMPTY_METHOD() empty()
   #define ANY_METHOD() any()
   #define ALL_METHOD() all()
   #define NONE_METHOD() none()
@@ -447,7 +447,9 @@ auto BM_Size(
 }
 
 template<typename Container>
-auto BM_Capacity(::benchmark::State& state) -> void
+auto BM_Capacity(
+  ::benchmark::State& state
+) -> void
 {
   for (auto _ : state)
   {
