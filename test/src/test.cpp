@@ -109,9 +109,8 @@ TEST_F(
   empty_bitset.Reserve(10);
 
   EXPECT_EQ(0, empty_bitset.Size());
-  ASSERT_EQ(
-    640, empty_bitset.Capacity()
-  ) << "Invalid reservation of space which must be: previous + new <=> 0 + 10 = 10";
+  ASSERT_EQ(640, empty_bitset.Capacity())
+    << "Invalid reservation of space which must be: previous + new <=> 0 + 10 = 10";
   ASSERT_NE(nullptr, empty_bitset.Data());
 
   filled_bitset.Reserve(10);
@@ -141,6 +140,15 @@ TEST_F(
   EXPECT_EQ(16, filled_bitset.Size()) << "Shrink to fit must not modify the number of bits";
   EXPECT_EQ(64, filled_bitset.Capacity()) << "If object does not contain extra space it must not change object state";
   EXPECT_NE(nullptr, filled_bitset.Data()) << "Nullptr must be set if object is empty but 'filled_bitset' is not";
+}
+
+TEST_F(
+  DynamicBitsetFixture,  //
+  ALL_METHOD
+)
+{
+  EXPECT_EQ(false, empty_bitset.All()) << "empty object can not containe any bits";
+  EXPECT_EQ(true, filled_bitset.All());
 }
 
 TEST_F(
@@ -628,25 +636,57 @@ TEST_F(
 
 TEST_F(
   DynamicBitsetFixture,  //
-  ITERATOR_TEST
+  ITERATOR_PREDICATE_TEST
 )
 {
-  for (auto&& iter : filled_bitset)
-  {
-    ASSERT_EQ(true, iter);
-    iter = false;
-    ASSERT_EQ(false, iter);
-  }
+  auto begin_iterator{filled_bitset.begin()};
+  auto end_iterator{filled_bitset.end()};
 
-  for (const auto& iter : filled_bitset)
-  {
-    ASSERT_EQ(false, iter);
-  }
+  EXPECT_EQ(false, begin_iterator == end_iterator);
+  EXPECT_EQ(true, begin_iterator != end_iterator);
+  EXPECT_EQ(true, begin_iterator <= end_iterator);
+  EXPECT_EQ(true, begin_iterator < end_iterator);
+  EXPECT_EQ(false, begin_iterator >= end_iterator);
+  EXPECT_EQ(false, begin_iterator > end_iterator);
+}
 
-  for ([[maybe_unused]]
-       auto& iter : empty_bitset)
+TEST_F(
+  DynamicBitsetFixture, //
+  ITERATOR_ARITHMETIC_TEST
+)
+{
+  auto begin_iterator{filled_bitset.begin()};
+  auto end_iterator{filled_bitset.end()};
+  typename decltype(filled_bitset)::SizeType bitset_size{filled_bitset.Size()};
+
+  EXPECT_EQ(bitset_size, end_iterator - begin_iterator);
+  ASSERT_EQ(false, begin_iterator + 0 == end_iterator);
+  EXPECT_EQ(true, begin_iterator + bitset_size == end_iterator);
+  ASSERT_EQ(true, begin_iterator + 0 != end_iterator);
+  EXPECT_EQ(false, begin_iterator + bitset_size != end_iterator);
+}
+
+TEST_F(
+  DynamicBitsetFixture, //
+  ITERATOR_BITWISE_TEST
+)
+{
+  ASSERT_EQ(true, filled_bitset.begin() != filled_bitset.end());
+  for (auto& bit : filled_bitset)
   {
-    ASSERT_EQ(false, true) << "Error in for range loop traversing empty object";
+    ASSERT_EQ(true, bit);
+    bit |= false;
+    ASSERT_EQ(true, bit);
+    bit |= true;
+    ASSERT_EQ(true, bit);
+    bit &= true;
+    ASSERT_EQ(true, bit);
+    bit &= false;
+    ASSERT_EQ(false, bit);
+    bit ^= true;
+    ASSERT_EQ(true, bit);
+    bit ^= false;
+    ASSERT_EQ(true, bit);
   }
 }
 
