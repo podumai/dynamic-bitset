@@ -980,7 +980,7 @@ class DynamicBitset
       const Iterator& rhs
     ) noexcept -> bool
     {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_byte_);
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
 
       return lhs.wrapper_.bit_ != rhs.wrapper_.bit_;
     }
