@@ -108,6 +108,13 @@ if(benchmark_FOUND)
   target_sources(
     STD_VECTOR_BOOL_BENCHMARK
       PRIVATE
+        FILE_SET std_vector_bench_h
+        TYPE HEADERS
+        BASE_DIRS
+          "${CMAKE_SOURCE_DIR}/benchmark/include"
+        FILES
+          "${CMAKE_SOURCE_DIR}/benchmark/include/dynamic_bitset/benchmark/benchmark.hpp"
+      PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/std/benchmark.cpp"
   )
   target_compile_features(
