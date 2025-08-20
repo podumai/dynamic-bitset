@@ -571,7 +571,7 @@ auto BM_BitwiseRightShift(
     ->Apply(BITS_DefaultRangeGenerator)
 #define BITS_PushBackBenchmark(container, func, generator)              \
   BENCHMARK(bits::benchmark::BM_PushBack<container>)                    \
-    ->Name(BITS_BenchmarkNameGenerator(container, func "@" #generator)) \
+    ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(generator)
 #define BITS_PopBackBenchmark(container, func)           \
   BENCHMARK(bits::benchmark::BM_PopBack<container>)      \
