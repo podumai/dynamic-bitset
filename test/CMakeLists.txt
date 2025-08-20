@@ -8,7 +8,8 @@ find_package(GTest QUIET)
 if(GTest_FOUND)
   message(CHECK_PASS "found")
   message(STATUS "Tests for bits::DynamicBitset will be available in ${CMAKE_CURRENT_BINARY_DIR}/bin directory.")
-  enable_testing()
+
+  include(GoogleTest)
 
   add_executable(BITS_DYNAMIC_BITSET_TEST)
   target_sources(
@@ -50,7 +51,6 @@ if(GTest_FOUND)
           "${TEST_OUTPUT_NAME}"
   )
 
-  include(GoogleTest)
   gtest_discover_tests(BITS_DYNAMIC_BITSET_TEST)
 else()
   message(CHECK_FAIL "not found")
