@@ -1,6 +1,6 @@
 # DYNAMIC-BITSET
 
-## Heading
+## Table of Contents
 
 1. [Description](#description);
 2. [Build](#build):
@@ -20,7 +20,7 @@ The **DynamicBitset** class designed to provide fast bit manipulations and space
 
 ## Build
 
-> [!IMPORTANT]
+> [!IMPORTANT]  
 > To build tests and/or benchmarks you need to have:  
 > * C/C++ compiler;
 > * CMake;
@@ -72,7 +72,7 @@ All possible benchmarks to built locates in subdirectories:
 You can run all the benchmarks available for each container by running the executable in `<build-dir>/benchmark/bin/<container>`.  
 Also you can provide regular expression to filter the benchmarks as with usual google benchmark executable.  
 To see the certain benchmarks run: `./<build-dir>/benchmark/bin/<container>/benchmark --benchmark_filter=<regex>`.  
-> [!TIP]
+> [!TIP]  
 > Benchmarks can be filtered by <ins>testing operations</ins>, <ins>container names</ins> or even by <ins>block types</ins>.  
 > Filtering benchmarks by block types only available for ***bits::DynamicBitset*** and ***boost::dynamic_bitset***.  
 > General benchmark name: `[(const )<container>::<operation>]`.  
