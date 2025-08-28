@@ -3009,17 +3009,17 @@ class DynamicBitset
    */
   [[nodiscard]] constexpr func ToString() const -> std::string
   {
-    std::string strBits(bits_, '\0');
+    std::string str_bits(bits_, '\0');
 
     for (SizeType current_bit{}; current_bit < bits_; ++current_bit)
     {
-      strBits[current_bit] =
+      str_bits[current_bit] =
         (storage_[current_bit >> BlockInfo::kByteDivConst] >> (current_bit & BlockInfo::kByteModConst) &
          BitMask::kBit) |
         '0';
     }
 
-    return strBits;
+    return str_bits;
   }
 
  private:
