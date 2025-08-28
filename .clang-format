@@ -29,7 +29,7 @@ BraceWrapping:
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
-BreakAfterAttributes: Always
+BreakAfterAttributes: Never
 BreakConstructorInitializers: BeforeComma
 BreakFunctionDefinitionParameters: true
 BreakInheritanceList: BeforeComma
