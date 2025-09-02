@@ -13,7 +13,7 @@
 
 The **DynamicBitset** class represents a set of bits. The size of the **DynamicBitset** can be set at runtime via constructor or `Resize` method.  
 It supports bitwise operations with behaviour equivalent to builtin unsigned integral types. The **DynamicBitset** class provides ability  
-to manipulate with bits via overloaded `operator[]` and `At`, `Test` member functions. It also supports iterators with proxy class for bit manipulation.  
+to manipulate with bits via overloaded `operator[]` and `At`, `Test` member functions. It also supports iterators with proxy class for bit manipulation.
 The main problem that **DynamicBitset** class is trying to solve is to represent a subset of finite set. For example you can use it  
 to represent the visited nodes in graph using BFS, DFS.  
 The **DynamicBitset** class designed to provide fast bit manipulations and space-efficient memory storage.
