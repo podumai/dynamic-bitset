@@ -8,6 +8,7 @@ module;
 #include <iterator>  /* iterator_traits, Iterator concepts */
 #include <memory>    /* std::allocator<T> */
 #include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
+#include <algorithm> /* std::copy, std::fill */
 
 #if CHAR_BIT != 8
   #error "bits::DynamicBitset only works on platforms with 8 bits per byte."

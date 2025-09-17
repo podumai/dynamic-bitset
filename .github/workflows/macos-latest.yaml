@@ -1,0 +1,14 @@
+name: macos-latest
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  macos-latest-build:
+    uses: ./.github/workflows/main.yaml
+    with:
+      os: macos-latest

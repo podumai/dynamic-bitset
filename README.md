@@ -1,3 +1,8 @@
+![Ubuntu](https://github.com/podumai/dynamic-bitset/actions/workflows/ubuntu-latest.yaml/badge.svg)
+![Windows](https://github.com/podumai/dynamic-bitset/actions/workflows/windows-latest.yaml/badge.svg)
+![MacOs](https://github.com/podumai/dynamic-bitset/actions/workflows/macos-latest.yaml/badge.svg)
+
+
 # DYNAMIC-BITSET
 
 ## Table of Contents
