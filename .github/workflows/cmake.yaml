@@ -26,4 +26,4 @@ jobs:
         run: cmake --build ./build
 
       - name: CMake test phase
-        run: ctest --test-dir ./build/release/test
+        run: ctest --test-dir ./build/test
