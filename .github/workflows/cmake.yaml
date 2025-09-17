@@ -15,21 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: threeal/cmake-action@v2.1.0
-        with:
-          cmake-version: latest
-        
-      - name: Pre-build configuration
-        run: |-
-          apt-get update
-          apt-get install -y clang ninja-build lld
       
       - name: CMake configuration phase
         run: |-
           cmake -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_C_COMPILER=/usr/bin/clang \
-                -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-                -DCMAKE_LINKER_TYPE=LLD \
-                -GNinja \
                 -S . \
                 -B ./build
 
