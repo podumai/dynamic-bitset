@@ -1,0 +1,26 @@
+name: CMake build and test workflow
+on:
+  push:
+    - master
+  pull_request:
+    - master
+
+jobs:
+  cmake:
+    runs-on:
+      - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-cmake@v1
+        with:
+          cmake-version: latest
+      
+      - name: CMake configuration phase
+        run: cmake -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+
+      - name: CMake build phase
+        run: cmake --build ./build
+
+      - name: CMake test phase
+        run: ctest --test-dir ./build/release/test

@@ -1,4 +1,4 @@
-message(CHECK_START "Detecting google benchmark package.")
+message(CHECK_START "Detecting google benchmark package")
 
 set(BITS_DYNAMIC_BITSET_BENCHMARK_INCLUDE "${CMAKE_SOURCE_DIR}/benchmark/include")
 set(BENCHMARK_OUTPUT_NAME "benchmark$<$<PLATFORM_ID:Windows>:.exe>")
