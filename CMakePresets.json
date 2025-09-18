@@ -1,8 +1,8 @@
 {
-  "version": 10,
+  "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 30,
+    "minor": 27,
     "patch": 0
   },
   "configurePresets": [
@@ -11,7 +11,7 @@
       "hidden": false,
       "displayName": "[Debug] Configuration preset (Default build generator)",
       "description": "Debug configuration preset using default build generator",
-      "binaryDir": "build/debug",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -21,7 +21,7 @@
       "hidden": false,
       "displayName": "[Release] Configuration preset (Default build generator)",
       "description": "Release configuration preset using default build generator",
-      "binaryDir": "build/release",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -53,6 +53,38 @@
       "configurePreset": "release",
       "inherits": [
         "base-build"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "debug",
+      "displayName": "[Debug] Debug project build workflow",
+      "description": "Debug project build workflow using default build generator",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "debug"
+        },
+        {
+          "type": "build",
+          "name": "debug"
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "displayName": "[Release] Release project build workflow",
+      "description": "Release project build workflow using default build generator",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "release"
+        },
+        {
+          "type": "build",
+          "name": "release"
+        }
       ]
     }
   ]

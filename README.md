@@ -1,15 +1,15 @@
+# DYNAMIC-BITSET
+
 ![Ubuntu](https://github.com/podumai/dynamic-bitset/actions/workflows/ubuntu-latest.yaml/badge.svg)
 ![Windows](https://github.com/podumai/dynamic-bitset/actions/workflows/windows-latest.yaml/badge.svg)
 ![MacOs](https://github.com/podumai/dynamic-bitset/actions/workflows/macos-latest.yaml/badge.svg)
-
-
-# DYNAMIC-BITSET
 
 ## Table of Contents
 
 1. [Description](#description);
 2. [Build](#build):
    - [CMakePresets build](#cmakepresets-build);
+   - [CMakeWorkflows build](#cmakeworkflows-build);
    - [Regular build](#regular-build).
 3. [Tests](#tests);
 4. [Benchmarks](#benchmarks).
@@ -25,12 +25,14 @@ The **DynamicBitset** class designed to provide fast bit manipulations and space
 
 > [!IMPORTANT]  
 > To build tests and/or benchmarks you need to have:  
-> * C/C++ compiler;
-> * CMake;
-> * google test package;
-> * google benchmark package.
+>
+> - C/C++ compiler;
+> - CMake;
+> - google test package;
+> - google benchmark package.
 
-The building process is configured with two options.   
+The building process is configured with two options.  
+
 | Option | Supported values | Default value |
 | :---: | :---: | :---: |
 | BUILD_TESTS | ON/OFF | ON |
@@ -38,41 +40,66 @@ The building process is configured with two options.
 
 ### CMakePresets build
 
-The project offers the build with **CMakePresets** support for configuration and building process.  
+> [!WARNING]  
+> Building the project with presets requires `CMake` version greater than or equal to **3.19**.  
+
+The project offers the build with `CMakePresets` support for configuration and building process.  
 Supported presets can be listed with commands:
-```
+
+```shell
 cmake --list-presets=configure
-cmkae --list-presets=build
+cmake --list-presets=build
 ```  
+
 With your chosen configuration and build preset finally execute this commands:  
-```
+
+```shell
 cmake --preset <preset-type> [-D <project-options>]
 cmake --build --preset <preset-type>
 ```
+
 All build artifacts and executables will be in `build/<preset-type>` folder.
+
+### CMakeWorkflows build
+
+> [!WARNING]  
+> Building the project with workflows requires `CMake` version greater than or equal to **3.25**.  
+
+On newer `CMake` you can just use the single command to configure and build the project.  
+First of all, check the supported workflows with: `cmake --list-presets=workflow`  
+Choose your appropriate workflow and execute this command: `cmake --workflow --preset <workflow-preset>`  
+> [!WARNING]  
+> Workflows do not accept any configuration parameters and you can not pass `-D<name>:<type>=<value>`.  
+> If you are going to build the benchmarks or provide additional configuration then use [CMakePresets build](#cmakepresets-build) or [Regular build](#regular-build).
 
 ### Regular build
 
-Also you can build the project without predefined presets with:
-```
+If your `CMake` does not support workflows or presets then you can build the project as usual.  
+Execute commands below with your options (if any will be specified, e.g. `-DCMAKE_LINKER_TYPE=<linker-type>`):
+
+```shell
 cmake [-D <project-options>] -DCMAKE_BUILD_TYPE=Release -S . -B ./build
 cmake --build ./build
 ```
 
 ## Tests
 
+> [!CAUTION]  
+> This class was optimized and tested for machines with Little-Endian byte ordering.
+
 Tests are written using gtest framework and located in `<build-dir>/test/bin` folder with executable name `test`.  
-Run the tests with ctest to see if all working properly: `ctest --test-dir <build-dir>/test`.
+Run the tests with `ctest` to see if all working correctly: `ctest --test-dir <build-dir>/test`.
 
 ## Benchmarks
 
 Benchmarks are written using google benchmark framework and located in `<build-dir>/benchmark/bin` directory.  
 All possible benchmarks to built locates in subdirectories:  
-* bits (bits::DynamicBitset);
-* boost (boost::dynamic_bitset);
-* std (std::vector<bool>).
 
-You can run all the benchmarks available for each container by running the executable in `<build-dir>/benchmark/bin/<container>`.  
+- bits (bits::DynamicBitset);
+- boost (boost::dynamic_bitset);
+- std (std::vector\<bool>).
+
+You can run all the benchmarks available for each container by running the executable in `<build-dir>/benchmark/bin/<namespace>`.  
 Also you can provide regular expression to filter the benchmarks as with usual google benchmark executable.  
 To see the certain benchmarks run: `./<build-dir>/benchmark/bin/<container>/benchmark --benchmark_filter=<regex>`.  
 > [!TIP]  
