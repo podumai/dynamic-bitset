@@ -1,0 +1,13 @@
+if($ENV{DYNAMIC_BITSET_DEV})
+  message(CHECK_START "[${PROJECT_NAME}] Detecting ccache support")
+  find_program(CCACHE_PROGRAM ccache)
+
+  if(CCACHE_PROGRAM)
+    message(CHECK_PASS "found")
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+  else()
+    message(CHECK_FAIL "not found")
+    message(WARNING "[${PROJECT_NAME}] Configure continues without ccache")
+  endif()
+endif()

@@ -24,19 +24,28 @@ The **DynamicBitset** class designed to provide fast bit manipulations and space
 ## Build
 
 > [!IMPORTANT]  
-> To build tests and/or benchmarks you need to have:  
+> To build tests, documentation or benchmarks you need to have:  
 >
 > - C/C++ compiler;
 > - CMake;
-> - google test package;
-> - google benchmark package.
+> - google test package (for tests);
+> - google benchmark package (for benchmarks);
+> - doxygen (for documentation).
 
-The building process is configured with two options.  
+The building process is configured with three options.  
 
 | Option | Supported values | Default value |
 | :---: | :---: | :---: |
 | BUILD_TESTS | ON/OFF | ON |
-| BUILD_BENCHMARKS | ON/OFF | OFF |  
+| BUILD_BENCHMARKS | ON/OFF | OFF |
+| GENERATE_DOCS | ON/OFF | OFF |
+
+> [!IMPORTANT]  
+> The following statements is correct:  
+>
+> - If you are missing google test and you specify option then it will be installed on project level;
+> - If you are missing google benchmark and you specify option then it will be installed on project level;
+> - If you specify doxygen option and it is locally installed then generated documentation will be located in `docs` directory.
 
 ### CMakePresets build
 
@@ -87,8 +96,8 @@ cmake --build ./build
 > [!CAUTION]  
 > This class was optimized and tested for machines with Little-Endian byte ordering.
 
-Tests are written using gtest framework and located in `<build-dir>/test/bin` folder with executable name `test`.  
-Run the tests with `ctest` to see if all working correctly: `ctest --test-dir <build-dir>/test`.
+Tests are written using gtest framework and located in `<build-dir>/tests/bin` folder with executable name `tests`.  
+Run the tests with `ctest` to see if all working correctly: `ctest --test-dir <build-dir>/tests`.
 
 ## Benchmarks
 
@@ -112,7 +121,7 @@ To see the certain benchmarks run: `./<build-dir>/benchmark/bin/<container>/benc
 <details>
   <summary>List of available benchmark names</summary>
   
-  ### Benchmark names:
+### Benchmark names
   
   | Benchmark | Name (operation) |
   | :---: | --- |
@@ -139,4 +148,5 @@ To see the certain benchmarks run: `./<build-dir>/benchmark/bin/<container>/benc
   | Empty method | empty() (vector/dynamic_bitset)<br>Empty() (DynamicBitset) |
   | Size method | size() (vector/dynamic_bitset)<br>Size() (DynamicBitset) |
   | Capacity method | capacity() (vector/dynamic_bitset)<br>Capacity() (DynamicBitset) |
+
 </details>

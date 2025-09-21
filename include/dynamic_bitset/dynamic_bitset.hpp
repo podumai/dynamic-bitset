@@ -1,32 +1,7 @@
-module;
-
-#include <bit>       /* std::popcount */
-#include <climits>   /* CHAR_BIT */
-#include <concepts>  /* std::unsigned_integral */
-#include <cstdint>   /* std::size_t, std::ptrdiff_t */
-#include <format>    /* std::format */
-#include <iterator>  /* iterator_traits, Iterator concepts */
-#include <memory>    /* std::allocator<T> */
-#include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
-#include <algorithm> /* std::copy, std::fill */
-
-#if CHAR_BIT != 8
-  #error "bits::DynamicBitset only works on platforms with 8 bits per byte."
-#endif
-
-#if !defined(NDEBUG)
-  #include <cassert>
-  #define BITS_DYNAMIC_BITSET_ASSERT(...) assert(__VA_ARGS__)
-#else
-  #define BITS_DYNAMIC_BITSET_ASSERT(...)
-#endif
-
-export module dynamic_bitset;
-
 /**
  * @file dynamic_bitset/dynamic_bitset.hpp
  * @date 25-07-2025
- * @version 2.0.0
+ * @version 0.1.0
  * @copyright MIT License
  *
  * @author Kirill Morozov kirillsm05@gmail.com
@@ -79,14 +54,116 @@ export module dynamic_bitset;
  * @ingroup dynamic-bitset-main
  */
 
-#define func auto
+#pragma once
 
-import :concepts;
+/**
+ * @internal
+ * @brief Current bits::DynamicBitset version
+ * @def BITS_DYNAMIC_BITSET_VERSION
+ */
+#define BITS_DYNAMIC_BITSET_VERSION "0.1.0"
 
-#define BEGIN_MODULE_EXPORT export {
-#define END_MODULE_EXPORT }
+#if defined(func)
+  #pragma push_macro("func")
+  /**
+   * @internal
+   * @brief Preprocessor macro definition for redefinition check.
+   * @def BITS_FUNC_MACRO_REDEFINED
+   */
+  #define BITS_FUNC_MACRO_REDEFINED
+  #undef func
+  /**
+   * @internal
+   * @brief Preprocessor macro definition for go-like functions.
+   * @def func
+   */
+  #define func auto
+#else
+  /**
+   * @internal
+   * @brief Preprocessor macro definition for go-like functions.
+   * @def func
+   */
+  #define func auto
+#endif
 
-BEGIN_MODULE_EXPORT
+#if !defined(NDEBUG)
+  #include <cassert>
+  /**
+   * @internal
+   * @brief Preprocessor macro definition for lib-like assert.
+   * @def BITS_DYNAMIC_BITSET_ASSERT
+   * 
+   * @note Disables with NDEBUG macro definition.
+   */
+  #define BITS_DYNAMIC_BITSET_ASSERT(...) assert(__VA_ARGS__)
+#else
+  /**
+   * @internal
+   * @brief Preprocessor macro definition for lib-like assert.
+   * @def BITS_DYNAMIC_BITSET_ASSERT
+   * 
+   * @note Disables with NDEBUG macro definition.
+   */
+  #define BITS_DYNAMIC_BITSET_ASSERT(...)
+#endif
+
+#include <bit>       /* std::popcount */
+#include <climits>   /* CHAR_BIT */
+#include <concepts>  /* std::unsigned_integral */
+#include <cstdint>   /* std::size_t, std::ptrdiff_t */
+#include <format>    /* std::format */
+#include <iterator>  /* iterator_traits, Iterator concepts */
+#include <memory>    /* std::allocator<T> */
+#include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
+#include <algorithm> /* std::copy, std::fill */
+
+#if CHAR_BIT != 8
+  #error "bits::DynamicBitset only works on platforms with 8 bits per byte."
+#endif
+
+/**
+ * @internal
+ * @brief Namespace that contains type contract checking.
+ * @namespace __bit_details
+ * 
+ * @details 
+ */
+namespace __bits_details
+{
+
+/**
+ * @brief Validates the passed Block type.
+ * @details Validates the passed Block type to be unsigned integral type
+ *          except `bool`, checks type if is power of two.
+ * @concept IsValidDynamicBitsetBlockType
+ */
+template<typename Block>
+concept IsValidDynamicBitsetBlockType =
+  std::unsigned_integral<Block> && !std::is_same_v<Block, bool> && !(sizeof(Block) & (sizeof(Block) - 1));
+
+/**
+ * @brief Validates the passed Allocator type.
+ * @details Validates the passed Allocator type that uses unsigned integral type
+ *          except `bool`, checks `value_type` fieled to be power of two.
+ * @concept IsValidDynamicBitsetAllocType
+ */
+template<typename Allocator>
+concept IsValidDynamicBitsetAllocatorType =
+  std::unsigned_integral<typename std::allocator_traits<Allocator>::value_type> &&
+  !std::is_same_v<typename std::allocator_traits<Allocator>::value_type, bool> &&
+  !(sizeof(typename std::allocator_traits<Allocator>::value_type) &
+    (sizeof(typename std::allocator_traits<Allocator>::value_type) - 1));
+
+/**
+ * @brief Validates the passed Block iterator type.
+ * @details Validates the passed Block iterator type to be convertible to block type.
+ * @concept IsValidDynamicBitsetBlockIterator
+ */
+template<typename BlockIterator, typename TargetBlock>
+concept IsValidDynamicBitsetBlockIterator = std::is_convertible_v<decltype(*BlockIterator{}), TargetBlock>;
+
+}  // namespace __bits_details
 
 /**
  * @brief Namespace containing `DynamicBitset` implementation.
@@ -95,22 +172,48 @@ BEGIN_MODULE_EXPORT
 namespace bits
 {
 
-template<IsValidDynamicBitsetBlockType Block, IsValidDynamicBitsetAllocatorType Allocator>
+template<
+  __bits_details::IsValidDynamicBitsetBlockType Block,
+  __bits_details::IsValidDynamicBitsetAllocatorType Allocator>
 class DynamicBitset;
 
+/**
+ * @internal
+ * @brief Rule for deducing block type (Default constructor).
+ * 
+ * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
+ */
 template<typename Allocator = std::allocator<size_t>>
 DynamicBitset()
   /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
 
+/**
+ * @internal
+ * @brief Rule for deducing block type (Parametrisized constructor with one argument specified).
+ * 
+ * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
+ */
 template<typename Allocator = std::allocator<size_t>>
 DynamicBitset(typename std::allocator_traits<Allocator>::size_type)
   /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
 
+/**
+ * @internal
+ * @brief Rule for deducing block type (Parametrisized constructor with two arguments specified).
+ * 
+ * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
+ */
 template<typename Allocator = std::allocator<size_t>>
 DynamicBitset(
   typename std::allocator_traits<Allocator>::size_type, typename std::allocator_traits<Allocator>::value_type
 ) /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
 
+/**
+ * @internal
+ * @brief Rule for deducing block type (Parametrisized constructor with three arguments specified).
+ * 
+ * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
+ */
 template<typename Allocator = std::allocator<size_t>>
 DynamicBitset(
   typename std::allocator_traits<Allocator>::size_type,
@@ -131,8 +234,8 @@ DynamicBitset(
  *          This container support vector-like interface with bitwise operations support.
  */
 template<
-  IsValidDynamicBitsetBlockType Block = size_t,
-  IsValidDynamicBitsetAllocatorType Allocator = std::allocator<Block>>
+  __bits_details::IsValidDynamicBitsetBlockType Block = size_t,
+  __bits_details::IsValidDynamicBitsetAllocatorType Allocator = std::allocator<Block>>
 class DynamicBitset
 {
  public:
@@ -213,7 +316,7 @@ class DynamicBitset
   using value_type = bool;
   /**
    * @brief An alias representing logical value type using pascal case.
-   * @typedef valueType
+   * @typedef ValueType
    *
    * @note This alias type do not represent the internal value type.
    */
@@ -233,12 +336,28 @@ class DynamicBitset
    * @typedef ConstIterator
    */
   using ConstIterator = const Iterator;
-  /// @}
+  /**
+   * @}
+   */
 
  private:
+  /**
+   * @internal
+   * @private
+   * @brief Alias for allocator traits (Shortcut).
+   * @typedef AllocatorTraits
+   */
   using AllocatorTraits = typename std::allocator_traits<AllocatorType>;
 
  private:
+ /**
+  * @internal
+  * @private
+  * @brief C-style enumeration for bit masks.
+  * @enum BitMask
+  * 
+  * @details Underlying type is equivalent to BlockType template parameter specified.
+  */
   enum BitMask : BlockType
   {
     kUnknown,
@@ -247,10 +366,32 @@ class DynamicBitset
     kSet = static_cast<BlockType>(-1)
   };
 
+  /**
+   * @internal
+   * @private
+   * @brief Structure that contains constants about bitwise operations and Block width in bits.
+   * 
+   * @struct BlockInfo
+   */
   struct BlockInfo final
   {
+    /**
+     * @internal
+     * @static
+     * @brief Contains information about block width in bits
+     */
     static constexpr SizeType kBitsCount{std::numeric_limits<BlockType>::digits};
+    /**
+     * @internal
+     * @static
+     * @brief Contains information about bit shift offset for division
+     */
     static constexpr SizeType kByteDivConst{kBitsCount < 32 ? sizeof(BlockType) + 2 : kBitsCount == 32 ? 5 : 6};
+    /**
+     * @internal
+     * @static
+     * @brief Represents the bit mask for modulo division
+     */
     static constexpr SizeType kByteModConst{kBitsCount - 1};
   };
 
@@ -467,6 +608,7 @@ class DynamicBitset
         return byte_ != nullptr ? GetBit() | '0' : '0';
       }
 
+     private:
       explicit constexpr operator DynamicBitset::BlockType() const noexcept
       {
         BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
@@ -990,7 +1132,7 @@ class DynamicBitset
     {
       BITS_DYNAMIC_BITSET_ASSERT(this != &other);
       wrapper_.byte_ = other.wrapper_.byte_;
-      wrapper_.bit = other.wrapper_.bit_;
+      wrapper_.bit_ = other.wrapper_.bit_;
       return *this;
     }
 
@@ -999,6 +1141,14 @@ class DynamicBitset
   };
 
  private:
+ /**
+  * @internal
+  * @private
+  * @static
+  * @brief Helper function for evalutating integer number of blocks
+  * 
+  * @throws None (no-throw guarantee).
+  */
   [[nodiscard]] static constexpr func CalculateCapacity(
     SizeType bits
   ) noexcept -> SizeType
@@ -1382,14 +1532,14 @@ class DynamicBitset
    * @public
    * @ingroup dynamic-bitset-main
    *
-   * @tparam BlockIterator.
+   * @tparam BlockIterator Iterator type that iterates over block type.
    *
-   * @param[in] first.
-   * @param[in] last.
+   * @param[in] first Iterator that points to the first block in block sequence.
+   * @param[in] last Iterator that points past the end block in block sequence.
    *
    * @throws std::bad_alloc If memory allocation fails (std::allocator).
    */
-  template<IsValidDynamicBitsetBlockIterator<BlockType> BlockIterator>
+  template<__bits_details::IsValidDynamicBitsetBlockIterator<BlockType> BlockIterator>
   constexpr DynamicBitset(
     BlockIterator first,  //
     BlockIterator last
@@ -1415,7 +1565,7 @@ class DynamicBitset
       bits_ = size;
       storage_ = AllocatorTraits::allocate(alloc_, blocks_);
     }
-    catch (const std::exception&)
+    catch (const std::exception& /* error */)
     {
       blocks_ = bits_ = 0;
       throw;
@@ -1866,7 +2016,7 @@ class DynamicBitset
    * @details This operation modifies number of stored blocks, not the stored bits.
    * @ingroup dynamic-bitset-Capacity
    *
-   * @param[in] bytes Bytes to append to the underlying storage.
+   * @param[in] blocks Blocks to append to the underlying storage.
    *
    * @throws std::bad_alloc If memory allocation fails (std::allocator).
    *
@@ -3246,4 +3396,8 @@ constexpr func swap(
 
 }  // namespace std
 
-END_MODULE_EXPORT
+#undef func
+#if defined(BITS_FUNC_MACRO_REDEFINED)
+  #undef BITS_FUNC_MACRO_REDEFINED
+  #pragma pop_macro("func")
+#endif

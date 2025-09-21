@@ -46,19 +46,32 @@
   #define NONE_METHOD() none()
 #endif
 
+/**
+ * @brief Namespace containing templated benchmark functions.
+ * @namespace bits::benchmark
+ */
 namespace bits::benchmark
 {
 
+/**
+ * @brief Namespace containing range generators for benchmakrs.
+ * @namespace generators
+ */
 namespace generators
 {
 
+/**
+ * @internal
+ * @brief Namespace containing constants for range generators.
+ * @namespace __details
+ */
 inline namespace __details
 {
 
-constexpr long long DefaultStartRange{2};
-constexpr long long DefaultLimitRange{INT_MAX};
-constexpr int DefaultMultiplierRange{2};
-constexpr int DefaultDenseStep{200'000'039};
+constexpr long long kDefaultStartRange{2};
+constexpr long long kDefaultLimitRange{INT_MAX};
+constexpr int kDefaultMultiplierRange{2};
+constexpr int kDefaultDenseStep{200'000'039};
 
 }  // namespace __details
 
@@ -102,8 +115,8 @@ auto BM_CopyConstructor(
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
-    Container copiedUnit(unit);
-    ::benchmark::DoNotOptimize(copiedUnit);
+    Container copied_unit(unit);
+    ::benchmark::DoNotOptimize(copied_unit);
   }
 }
 
@@ -117,8 +130,8 @@ auto BM_MoveConstructor(
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
-    Container movedUnit(std::move(unit));
-    ::benchmark::DoNotOptimize(movedUnit);
+    Container moved_unit(std::move(unit));
+    ::benchmark::DoNotOptimize(moved_unit);
   }
 }
 
@@ -540,146 +553,175 @@ auto BM_BitwiseRightShift(
 
 #define BITS_DefaultDenseRangeGenerator             \
   bits::benchmark::generators::DenseGenerator<      \
-    bits::benchmark::generators::DefaultStartRange, \
-    bits::benchmark::generators::DefaultLimitRange, \
-    bits::benchmark::generators::DefaultDenseStep>
+    bits::benchmark::generators::kDefaultStartRange, \
+    bits::benchmark::generators::kDefaultLimitRange, \
+    bits::benchmark::generators::kDefaultDenseStep>
 #define BITS_DefaultRangeGenerator                       \
   bits::benchmark::generators::MultiplicativeGenerator<  \
-    bits::benchmark::generators::DefaultMultiplierRange, \
-    bits::benchmark::generators::DefaultStartRange,      \
-    bits::benchmark::generators::DefaultLimitRange>
+    bits::benchmark::generators::kDefaultMultiplierRange, \
+    bits::benchmark::generators::kDefaultStartRange,      \
+    bits::benchmark::generators::kDefaultLimitRange>
 
 #define BITS_BenchmarkNameGenerator(container, func) "[" #container "::" #func "]"
 
 #define BITS_DefaultConstructorBenchmark(container, func) \
   BENCHMARK(bits::benchmark::BM_DefaultConstructor<container>)->Name(BITS_BenchmarkNameGenerator(container, func))
+
 #define BITS_CopyConstructorBenchmark(container, func)      \
   BENCHMARK(bits::benchmark::BM_CopyConstructor<container>) \
     ->Name(BITS_BenchmarkNameGenerator(container, func))    \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_MoveConstructorBenchmark(container, func)      \
   BENCHMARK(bits::benchmark::BM_MoveConstructor<container>) \
     ->Name(BITS_BenchmarkNameGenerator(container, func))    \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_CopyAssignmentBenchmark(container, func)      \
   BENCHMARK(bits::benchmark::BM_CopyAssignment<container>) \
     ->Name(BITS_BenchmarkNameGenerator(container, func))   \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_MoveAssignmentBenchmark(container, func)      \
   BENCHMARK(bits::benchmark::BM_MoveAssignment<container>) \
     ->Name(BITS_BenchmarkNameGenerator(container, func))   \
     ->Apply(BITS_DefaultRangeGenerator)
-#define BITS_PushBackBenchmark(container, func, generator)              \
-  BENCHMARK(bits::benchmark::BM_PushBack<container>)                    \
-    ->Name(BITS_BenchmarkNameGenerator(container, func)) \
+
+#define BITS_PushBackBenchmark(container, func, generator) \
+  BENCHMARK(bits::benchmark::BM_PushBack<container>)       \
+    ->Name(BITS_BenchmarkNameGenerator(container, func))   \
     ->Apply(generator)
+
 #define BITS_PopBackBenchmark(container, func)           \
   BENCHMARK(bits::benchmark::BM_PopBack<container>)      \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_SubscriptLoopBenchmark(container, func)          \
   BENCHMARK(bits::benchmark::BM_SubscriptTraverse<container>) \
     ->Name(BITS_BenchmarkNameGenerator(container, func))      \
-    ->Range(bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange)
+    ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
+
 #define BITS_AtLoopBenchmark(container, func)            \
   BENCHMARK(bits::benchmark::BM_AtTraverse<container>)   \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
-    ->Range(bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange)
+    ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
+
 #define BITS_TestLoopBenchmark(container, func)          \
   BENCHMARK(bits::benchmark::BM_TestTraverse<container>) \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
-    ->Range(bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange)
+    ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
+
 #define BITS_FrontBenchmark(container, func)             \
   BENCHMARK(bits::benchmark::BM_Front<container>)        \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_BackBenchmark(container, func)              \
   BENCHMARK(bits::benchmark::BM_Back<container>)         \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_CountBenchmark(container, func)             \
   BENCHMARK(bits::benchmark::BM_Count<container>)        \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_EmptyBenchmark(container, func)             \
   BENCHMARK(bits::benchmark::BM_Empty<container>)        \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_ToStringBenchmark(container, func)          \
   BENCHMARK(bits::benchmark::BM_ToString<container>)     \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_AllBenchmark(container, func)               \
   BENCHMARK(bits::benchmark::BM_All<container>)          \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_AnyBenchmark(container, func)               \
   BENCHMARK(bits::benchmark::BM_Any<container>)          \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_NoneBenchmark(container, func)              \
   BENCHMARK(bits::benchmark::BM_None<container>)         \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_InverseBenchmark(container, func)           \
   BENCHMARK(bits::benchmark::BM_Inverse<container>)      \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_SetBenchmark(container, func)               \
   BENCHMARK(bits::benchmark::BM_Set<container>)          \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_ResetBenchmark(container, func)             \
   BENCHMARK(bits::benchmark::BM_Reset<container>)        \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_FlipBenchmark(container, func)              \
   BENCHMARK(bits::benchmark::BM_Flip<container>)         \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_SwapBenchmark(container, func)              \
   BENCHMARK(bits::benchmark::BM_Swap<container>)         \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_SizeBenchmark(container, func)              \
   BENCHMARK(bits::benchmark::BM_Size<container>)         \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_CapacityBenchmark(container, func)          \
   BENCHMARK(bits::benchmark::BM_Capacity<container>)     \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Apply(BITS_DefaultRangeGenerator)
+
 #define BITS_AndOperatorBenchmark(container, func)       \
   BENCHMARK(bits::benchmark::BM_BitwiseAND<container>)   \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
-    ->Range(bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange)
+    ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
+
 #define BITS_OrOperatorBenchmark(container, func)        \
   BENCHMARK(bits::benchmark::BM_BitwiseOR<container>)    \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
-    ->Range(bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange)
+    ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
+
 #define BITS_XorOperatorBenchmark(container, func)       \
   BENCHMARK(bits::benchmark::BM_BitwiseXOR<container>)   \
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
-    ->Range(bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange)
+    ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
+
 #define BITS_LeftShiftBenchmark(container, func)                                                                \
   BENCHMARK(bits::benchmark::BM_BitwiseLeftShift<container>)                                                    \
     ->Name(BITS_BenchmarkNameGenerator(container, func))                                                        \
     ->ArgsProduct(                                                                                              \
       {benchmark::CreateRange(                                                                                  \
-         bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange         \
+         bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange         \
        ),                                                                                                       \
        benchmark::CreateRange(                                                                                  \
-         1, bits::benchmark::generators::DefaultLimitRange, bits::benchmark::generators::DefaultMultiplierRange \
+         1, bits::benchmark::generators::kDefaultLimitRange, bits::benchmark::generators::kDefaultMultiplierRange \
        )}                                                                                                       \
     )
+
 #define BITS_RightShiftBenchmark(container, func)                                                               \
   BENCHMARK(bits::benchmark::BM_BitwiseRightShift<container>)                                                   \
     ->Name(BITS_BenchmarkNameGenerator(container, func))                                                        \
     ->ArgsProduct(                                                                                              \
       {benchmark::CreateRange(                                                                                  \
-         bits::benchmark::generators::DefaultStartRange, bits::benchmark::generators::DefaultLimitRange         \
+         bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange         \
        ),                                                                                                       \
        benchmark::CreateRange(                                                                                  \
-         1, bits::benchmark::generators::DefaultLimitRange, bits::benchmark::generators::DefaultMultiplierRange \
+         1, bits::benchmark::generators::kDefaultLimitRange, bits::benchmark::generators::kDefaultMultiplierRange \
        )}                                                                                                       \
     )
