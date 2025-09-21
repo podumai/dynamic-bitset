@@ -25,5 +25,5 @@ jobs:
           options: CMAKE_BUILD_TYPE=Release
 
       - name: CMake test phase
-        run: ctest --test-dir ./build/test
+        run: ctest --test-dir ./build/tests
       - run: echo "Job status is ${{ job.status }}"
