@@ -1,4 +1,4 @@
-name: CMake build and test workflow
+name: "[CMake] Project configuration, build and testing"
 run-name: ${{ github.actor }} has done ${{ github.event_name }} to master branch
 on:
   workflow_call:
@@ -16,11 +16,12 @@ on:
 jobs:
   cmake:
     runs-on: ${{ inputs.os }}
+    env:
+      CC: ${{ inputs.c_compiler }}
+      CXX: ${{ inputs.cpp_compiler }}
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event"
       - run: echo "This job is running on ${{ runner.os }}"
-      - run: echo "Using C compiler: ${{ inputs.c_compiler }}"
-      - run: echo "Using CXX compiler: ${{ inputs.cpp_compiler }}"
 
       - uses: actions/checkout@v4
       - run: echo "The ${{ github.repository }} repository has been cloned to runner"
@@ -30,8 +31,6 @@ jobs:
         with:
           source-dir: .
           build-dir: build
-          c-compiler: ${{ inputs.c_compiler }}
-          cxx-compiler: ${{ inputs.cpp_compiler }}
           options: |
             CMAKE_BUILD_TYPE=Release
             BUILD_BENCHMARKS=ON
