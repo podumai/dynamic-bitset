@@ -41,7 +41,7 @@ The building process is configured with three options.
 | GENERATE_DOCS | ON/OFF | OFF |
 
 > [!IMPORTANT]  
-> The following statements is correct:  
+> The following statements are correct:  
 >
 > - If you are missing google test and you specify option then it will be installed on project level;
 > - If you are missing google benchmark and you specify option then it will be installed on project level;

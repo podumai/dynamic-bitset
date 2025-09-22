@@ -32,11 +32,11 @@ TEST_F(
   COPY_CONSTRUCTOR_TEST
 )
 {
-  bits::DynamicBitset<> testVector{filled_bitset};
+  bits::DynamicBitset<> test_vector{filled_bitset};
 
-  EXPECT_EQ(testVector.Size(), filled_bitset.Size());
-  EXPECT_EQ(testVector.Capacity(), filled_bitset.Capacity());
-  EXPECT_EQ(testVector.ToString(), filled_bitset.ToString());
+  EXPECT_EQ(test_vector.Size(), filled_bitset.Size());
+  EXPECT_EQ(test_vector.Capacity(), filled_bitset.Capacity());
+  EXPECT_EQ(test_vector.ToString(), filled_bitset.ToString());
 }
 
 TEST_F(
@@ -44,12 +44,12 @@ TEST_F(
   MOVE_CONSTRUCTOR_TEST
 )
 {
-  auto testVector(std::move(filled_bitset));
+  auto test_vector(std::move(filled_bitset));
 
-  EXPECT_EQ(16, testVector.Size());
-  EXPECT_EQ(64, testVector.Capacity());
-  ASSERT_NE(nullptr, testVector.Data());
-  EXPECT_EQ("1111111111111111", testVector.ToString());
+  EXPECT_EQ(16, test_vector.Size());
+  EXPECT_EQ(64, test_vector.Capacity());
+  ASSERT_NE(nullptr, test_vector.Data());
+  EXPECT_EQ("1111111111111111", test_vector.ToString());
 
   EXPECT_EQ(empty_bitset.Size(), filled_bitset.Size()) << "Moved object must be empty with zero size";
   EXPECT_EQ(empty_bitset.Capacity(), filled_bitset.Capacity()) << "Moved object must be empty with zero capacity";
@@ -259,10 +259,10 @@ TEST_F(
 {
   EXPECT_THROW(empty_bitset.Set(), std::out_of_range);
 
-  bits::DynamicBitset<> testVector{16};
-  testVector.Set();
+  bits::DynamicBitset<> test_vector{16};
+  test_vector.Set();
 
-  EXPECT_EQ(false, testVector.None()) << "'Set' method must set all bits to true";
+  EXPECT_EQ(false, test_vector.None()) << "'Set' method must set all bits to true";
 }
 
 TEST_F(
@@ -695,39 +695,39 @@ TEST_F(
   STRESS_TEST
 )
 {
-  bits::DynamicBitset<> testVector;
+  bits::DynamicBitset<> test_vector;
 
   constexpr std::size_t SIZE{static_cast<size_t>(std::numeric_limits<int>::max())};
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.PushBack(true);
+    test_vector.PushBack(true);
   }
 
-  ASSERT_EQ(SIZE, testVector.Count());
+  ASSERT_EQ(SIZE, test_vector.Count());
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.PopBack();
+    test_vector.PopBack();
   }
 
-  ASSERT_EQ(0, testVector.Size());
+  ASSERT_EQ(0, test_vector.Size());
 
-  testVector.ShrinkToFit();
+  test_vector.ShrinkToFit();
 
   constexpr std::size_t MID_SIZE{SIZE >> 1};
 
-  testVector.Resize(SIZE, true);
+  test_vector.Resize(SIZE, true);
 
-  testVector >>= MID_SIZE;
+  test_vector >>= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE + 1, testVector.Count());
+  ASSERT_EQ(MID_SIZE + 1, test_vector.Count());
 
-  testVector <<= MID_SIZE;
+  test_vector <<= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE + 1, testVector.Count());
+  ASSERT_EQ(MID_SIZE + 1, test_vector.Count());
 
-  testVector.Clear();
+  test_vector.Clear();
 }
 
 std::size_t buffer[1000];
@@ -739,38 +739,38 @@ TEST_F(
 {
   std::pmr::monotonic_buffer_resource rs{static_cast<void*>(buffer), 1000};
   std::pmr::polymorphic_allocator<std::size_t> pAlloc{&rs};
-  bits::DynamicBitset<typename std::allocator_traits<decltype(pAlloc)>::value_type, decltype(pAlloc)> testVector{
+  bits::DynamicBitset<typename std::allocator_traits<decltype(pAlloc)>::value_type, decltype(pAlloc)> test_vector{
     pAlloc
   };
   constexpr std::size_t SIZE{7200};
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.PushBack(true);
+    test_vector.PushBack(true);
   }
 
-  ASSERT_EQ(SIZE, testVector.Count());
+  ASSERT_EQ(SIZE, test_vector.Count());
 
   for (std::size_t i{}; i < SIZE; ++i)
   {
-    testVector.PopBack();
+    test_vector.PopBack();
   }
 
-  ASSERT_EQ(true, testVector.None());
+  ASSERT_EQ(true, test_vector.None());
 
-  testVector.ShrinkToFit();
+  test_vector.ShrinkToFit();
 
   constexpr std::size_t MID_SIZE{SIZE >> 1};
 
-  testVector.Resize(SIZE, true);
+  test_vector.Resize(SIZE, true);
 
-  testVector >>= MID_SIZE;
+  test_vector >>= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE, testVector.Count());
+  ASSERT_EQ(MID_SIZE, test_vector.Count());
 
-  testVector <<= MID_SIZE;
+  test_vector <<= MID_SIZE;
 
-  ASSERT_EQ(MID_SIZE, testVector.Count());
+  ASSERT_EQ(MID_SIZE, test_vector.Count());
 
-  testVector.Clear();
+  test_vector.Clear();
 }
