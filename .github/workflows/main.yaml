@@ -6,6 +6,12 @@ on:
       os:
         required: true
         type: string
+      c_compiler:
+        required: true
+        type: string
+      cpp_compiler:
+        required: true
+        type: string
 
 jobs:
   cmake:
@@ -13,6 +19,8 @@ jobs:
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event"
       - run: echo "This job is running on ${{ runner.os }}"
+      - run: echo "Using C compiler: ${{ inputs.c_compiler }}"
+      - run: echo "Using CXX compiler: ${{ inputs.cpp_compiler }}"
 
       - uses: actions/checkout@v4
       - run: echo "The ${{ github.repository }} repository has been cloned to runner"
@@ -24,7 +32,9 @@ jobs:
           build-dir: build
           c-compiler: ${{ inputs.c_compiler }}
           cxx-compiler: ${{ inputs.cpp_compiler }}
-          options: CMAKE_BUILD_TYPE=Release
+          options: |
+            CMAKE_BUILD_TYPE=Release
+            BUILD_BENCHMARKS=ON
 
       - name: CMake test phase
         run: ctest --test-dir ./build/tests
