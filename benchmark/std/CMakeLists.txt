@@ -18,8 +18,6 @@ target_sources(
 target_compile_features(
   STD_VECTOR_BOOL_BENCHMARK
     PRIVATE
-      cxx_std_23
-    PUBLIC
       cxx_std_20
 )
 target_link_libraries(

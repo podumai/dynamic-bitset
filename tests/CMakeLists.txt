@@ -3,6 +3,7 @@ message(STATUS " ${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 add_executable(BITS_DYNAMIC_BITSET_TEST)
 set(TEST_OUTPUT_NAME "tests$<$<PLATFORM_ID:Windows>:.exe>")
+set(bits_dynamic_bitset_test_h "" CACHE INTERNAL "")
 target_sources(
   BITS_DYNAMIC_BITSET_TEST
     PRIVATE
@@ -23,8 +24,6 @@ target_precompile_headers(
 target_compile_features(
   BITS_DYNAMIC_BITSET_TEST
     PRIVATE
-      cxx_std_23
-    PUBLIC
       cxx_std_20
 )
 target_link_libraries(

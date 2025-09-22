@@ -26,8 +26,8 @@ The **DynamicBitset** class designed to provide fast bit manipulations and space
 > [!IMPORTANT]  
 > To build tests, documentation or benchmarks you need to have:  
 >
-> - C/C++ compiler;
-> - CMake;
+> - C/C++ compiler (C++20 support);
+> - CMake (v3.23.0);
 > - google test package (for tests);
 > - google benchmark package (for benchmarks);
 > - doxygen (for documentation).
@@ -50,7 +50,7 @@ The building process is configured with three options.
 ### CMakePresets build
 
 > [!WARNING]  
-> Building the project with presets requires `CMake` version greater than or equal to **3.19**.  
+> Building the project with presets requires `CMake` version greater than or equal to **3.25**.  
 
 The project offers the build with `CMakePresets` support for configuration and building process.  
 Supported presets can be listed with commands:

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.23)
 
 set(VERSION_REGEX "#define BITS_DYNAMIC_BITSET_VERSION[ \t]+\"(.+)\"")
 file(
@@ -45,6 +45,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo"
   )
 endif()
+
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 include(CheckIPOSupported)

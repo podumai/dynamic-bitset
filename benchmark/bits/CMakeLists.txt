@@ -30,8 +30,6 @@ target_compile_options(
 target_compile_features(
     BITS_DYNAMIC_BITSET_BENCHMARK
       PRIVATE
-        cxx_std_23
-      PUBLIC
         cxx_std_20
 )
 target_link_libraries(
