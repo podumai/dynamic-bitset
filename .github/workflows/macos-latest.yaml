@@ -12,3 +12,5 @@ jobs:
     uses: ./.github/workflows/main.yaml
     with:
       os: macos-latest
+      c_compiler: clang
+      cpp_compiler: clang++

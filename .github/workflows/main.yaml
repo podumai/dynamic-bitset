@@ -22,6 +22,8 @@ jobs:
         with:
           source-dir: .
           build-dir: build
+          c-compiler: ${{ inputs.c_compiler }}
+          cxx-compiler: ${{ inputs.cpp_compiler }}
           options: CMAKE_BUILD_TYPE=Release
 
       - name: CMake test phase

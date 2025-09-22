@@ -93,7 +93,7 @@
    * @internal
    * @brief Preprocessor macro definition for lib-like assert.
    * @def BITS_DYNAMIC_BITSET_ASSERT
-   * 
+   *
    * @note Disables with NDEBUG macro definition.
    */
   #define BITS_DYNAMIC_BITSET_ASSERT(...) assert(__VA_ARGS__)
@@ -102,12 +102,13 @@
    * @internal
    * @brief Preprocessor macro definition for lib-like assert.
    * @def BITS_DYNAMIC_BITSET_ASSERT
-   * 
+   *
    * @note Disables with NDEBUG macro definition.
    */
   #define BITS_DYNAMIC_BITSET_ASSERT(...)
 #endif
 
+#include <algorithm> /* std::copy, std::fill */
 #include <bit>       /* std::popcount */
 #include <climits>   /* CHAR_BIT */
 #include <concepts>  /* std::unsigned_integral */
@@ -116,7 +117,6 @@
 #include <iterator>  /* iterator_traits, Iterator concepts */
 #include <memory>    /* std::allocator<T> */
 #include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
-#include <algorithm> /* std::copy, std::fill */
 
 #if CHAR_BIT != 8
   #error "bits::DynamicBitset only works on platforms with 8 bits per byte."
@@ -126,8 +126,8 @@
  * @internal
  * @brief Namespace that contains type contract checking.
  * @namespace __bit_details
- * 
- * @details 
+ *
+ * @details
  */
 namespace __bits_details
 {
@@ -180,7 +180,7 @@ class DynamicBitset;
 /**
  * @internal
  * @brief Rule for deducing block type (Default constructor).
- * 
+ *
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Allocator = std::allocator<size_t>>
@@ -190,7 +190,7 @@ DynamicBitset()
 /**
  * @internal
  * @brief Rule for deducing block type (Parametrisized constructor with one argument specified).
- * 
+ *
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Allocator = std::allocator<size_t>>
@@ -200,7 +200,7 @@ DynamicBitset(typename std::allocator_traits<Allocator>::size_type)
 /**
  * @internal
  * @brief Rule for deducing block type (Parametrisized constructor with two arguments specified).
- * 
+ *
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Allocator = std::allocator<size_t>>
@@ -211,7 +211,7 @@ DynamicBitset(
 /**
  * @internal
  * @brief Rule for deducing block type (Parametrisized constructor with three arguments specified).
- * 
+ *
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Allocator = std::allocator<size_t>>
@@ -350,14 +350,14 @@ class DynamicBitset
   using AllocatorTraits = typename std::allocator_traits<AllocatorType>;
 
  private:
- /**
-  * @internal
-  * @private
-  * @brief C-style enumeration for bit masks.
-  * @enum BitMask
-  * 
-  * @details Underlying type is equivalent to BlockType template parameter specified.
-  */
+  /**
+   * @internal
+   * @private
+   * @brief C-style enumeration for bit masks.
+   * @enum BitMask
+   *
+   * @details Underlying type is equivalent to BlockType template parameter specified.
+   */
   enum BitMask : BlockType
   {
     kUnknown,
@@ -370,7 +370,7 @@ class DynamicBitset
    * @internal
    * @private
    * @brief Structure that contains constants about bitwise operations and Block width in bits.
-   * 
+   *
    * @struct BlockInfo
    */
   struct BlockInfo final
@@ -473,7 +473,8 @@ class DynamicBitset
         Pointer ptr,  //
         DifferenceType bit_position
       ) noexcept
-        : byte_{ptr}, bit_{bit_position}
+        : byte_{ptr}  //
+        , bit_{bit_position}
       { }
 
       constexpr BitWrapper(  //
@@ -1141,14 +1142,14 @@ class DynamicBitset
   };
 
  private:
- /**
-  * @internal
-  * @private
-  * @static
-  * @brief Helper function for evalutating integer number of blocks
-  * 
-  * @throws None (no-throw guarantee).
-  */
+  /**
+   * @internal
+   * @private
+   * @static
+   * @brief Helper function for evalutating integer number of blocks
+   *
+   * @throws None (no-throw guarantee).
+   */
   [[nodiscard]] static constexpr func CalculateCapacity(
     SizeType bits
   ) noexcept -> SizeType
@@ -1156,6 +1157,16 @@ class DynamicBitset
     return (bits >> BlockInfo::kByteDivConst) + (bits & BlockInfo::kByteModConst ? 1 : 0);
   }
 
+  /**
+   * @internal
+   * @private
+   * @brief Set bit with index to the specified value
+   * 
+   * @param[in] index The zero-base index of the bit to access.
+   * @param[in] value The boolean value `true/false`.
+   * 
+   * @throws None (no-throw guarantee).
+   */
   constexpr func SetBit(
     SizeType index,  //
     bool value

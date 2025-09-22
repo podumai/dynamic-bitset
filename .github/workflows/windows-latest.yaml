@@ -12,3 +12,5 @@ jobs:
     uses: ./.github/workflows/main.yaml
     with:
       os: windows-latest
+      c_compiler: cl
+      cpp_compiler: cl

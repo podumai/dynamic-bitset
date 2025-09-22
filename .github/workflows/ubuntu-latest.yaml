@@ -12,3 +12,5 @@ jobs:
     uses: ./.github/workflows/main.yaml
     with:
       os: ubuntu-latest
+      c_compiler: gcc
+      cpp_compiler: g++
