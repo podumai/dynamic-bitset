@@ -403,8 +403,39 @@ class DynamicBitset
     class BitWrapper final
     {
      private:
-      friend DynamicBitset;
       friend Iterator;
+
+#if defined(_MSVC_VER)
+      [[nodiscard]] friend operator==(
+        const Iterator&, //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator!=(
+        const Iterator&, //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator<(
+        const Iterator&, //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator<=(
+        const Iterator&, //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator>(
+        const Iterator&, //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator>=(
+        const Iterator&, //
+        const Iterator&
+      ) noexcept -> bool;
+#endif
 
      public:
       constexpr BitWrapper() noexcept = default;

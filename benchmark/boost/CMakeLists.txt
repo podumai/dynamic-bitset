@@ -5,11 +5,10 @@ if(Boost_FOUND)
   message(CHECK_PASS "found")
   message(STATUS "[${PROJECT_NAME}] Benchmark for boost::dynamic_bitset will be built")
 
-  set(BOOST_DYNAMIC_BITSET_BENCHMARK)
-  set(BENCHMARK_OUTPUT_NAME "boost-benchmark$<$<PLATFORM_ID:Windows>:.exe>")
-  add_executable(BOOST_DYNAMIC_BITSET_BENCHMARK)
+  set(BoostDynamicBitsetBenchmark)
+  add_executable(BoostDynamicBitsetBenchmark)
   target_sources(
-    BOOST_DYNAMIC_BITSET_BENCHMARK
+    BoostDynamicBitsetBenchmark
       PRIVATE
         FILE_SET boost_dbitset_bench_h
         TYPE HEADERS
@@ -23,22 +22,22 @@ if(Boost_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/benchmark.cpp"
   )
   target_compile_features(
-    BOOST_DYNAMIC_BITSET_BENCHMARK
+    BoostDynamicBitsetBenchmark
       PRIVATE
         cxx_std_20
   )
   target_link_libraries(
-    BOOST_DYNAMIC_BITSET_BENCHMARK
+    BoostDynamicBitsetBenchmark
       PRIVATE
         benchmark::benchmark
   )
   set_target_properties(
-    BOOST_DYNAMIC_BITSET_BENCHMARK
+    BoostDynamicBitsetBenchmark
       PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY
           "${CMAKE_BINARY_DIR}/benchmark/bin"
         OUTPUT_NAME
-          "${BENCHMARK_OUTPUT_NAME}"
+          "boost-benchmark"
         INTERPROCEDURAL_OPTIMIZATION
           "$<${IPO_SUPPORT}:TRUE:FALSE>"
   )

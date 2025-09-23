@@ -144,7 +144,7 @@ To see the certain benchmarks run: `./<build-dir>/benchmark/bin/<container>/benc
   | None method | none() (dynamic_bitset)<br>None() (DynamicBitset) |
   | Front method | front() (vector)<br>Front() (DynamicBitset) |
   | Back method | back() (vector)<br>Back() (DynamicBitset) |
-  | Count method | count() (dynamic_bitset)<br>Count() (DynamicBitset) |
+  | Count method | Count() (DynamicBitset) |
   | Empty method | empty() (vector/dynamic_bitset)<br>Empty() (DynamicBitset) |
   | Size method | size() (vector/dynamic_bitset)<br>Size() (DynamicBitset) |
   | Capacity method | capacity() (vector/dynamic_bitset)<br>Capacity() (DynamicBitset) |

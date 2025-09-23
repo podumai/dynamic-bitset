@@ -463,8 +463,39 @@ class DynamicBitset
     class BitWrapper final
     {
      private:
-      friend DynamicBitset;
       friend Iterator;
+
+#if defined(_MSVC_VER)
+      [[nodiscard]] friend operator==(
+        const Iterator&,  //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator!=(
+        const Iterator&,  //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator<(
+        const Iterator&,  //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator<=(
+        const Iterator&,  //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator>(
+        const Iterator&,  //
+        const Iterator&
+      ) noexcept -> bool;
+
+      [[nodiscard]] friend operator>=(
+        const Iterator&,  //
+        const Iterator&
+      ) noexcept -> bool;
+#endif
 
      public:
       constexpr BitWrapper() noexcept = default;
@@ -1161,10 +1192,10 @@ class DynamicBitset
    * @internal
    * @private
    * @brief Set bit with index to the specified value
-   * 
+   *
    * @param[in] index The zero-base index of the bit to access.
    * @param[in] value The boolean value `true/false`.
-   * 
+   *
    * @throws None (no-throw guarantee).
    */
   constexpr func SetBit(
@@ -1904,7 +1935,36 @@ class DynamicBitset
    */
   [[nodiscard]] constexpr func All() const noexcept -> bool
   {
-    return bits_ && bits_ == Count();
+    if (!bits_)
+    {
+      return false;
+    }
+
+    Pointer end{storage_ + CalculateCapacity(bits_) - 1};
+
+    for (Pointer begin{storage_}; begin < end; ++begin)
+    {
+      if (!*begin)
+      {
+        return false;
+      }
+    }
+
+    SizeType remaining_bits{bits_ & BlockInfo::kByteModConst};
+    if (!remaining_bits)
+    {
+      remaining_bits = BlockInfo::kBitsCount;
+    }
+
+    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit)
+    {
+      if (!(*end & BitMask::kBit << current_bit))
+      {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

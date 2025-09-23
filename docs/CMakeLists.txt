@@ -10,7 +10,7 @@ if(DOXYGEN_PROGRAM)
     RESULT_VARIABLE DOXYGEN_PROGRAM_RESULT
   )
 
-  if(NOT "${DOXYGEN_PROGRAM_RESULT}" EQUAL "0")
+  if("${DOXYGEN_PROGRAM_RESULT}" EQUAL "0")
     message(STATUS "[${PROJECT_NAME}] Documentation output directory:")
     message(STATUS " ${CMAKE_CURRENT_SOURCE_DIR}")
   else()

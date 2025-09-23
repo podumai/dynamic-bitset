@@ -1,10 +1,9 @@
 message(STATUS "[${PROJECT_NAME}] Benchmark for std::vector<bool> will be built")
 
-set(STD_VECTOR_BOOL_BENCHMARK)
-set(BENCHMARK_OUTPUT_NAME "std-benchmark$<$<PLATFORM_ID:Windows>:.exe>")
-add_executable(STD_VECTOR_BOOL_BENCHMARK)
+set(StdVectorBoolBenchmark)
+add_executable(StdVectorBoolBenchmark)
 target_sources(
-  STD_VECTOR_BOOL_BENCHMARK
+  StdVectorBoolBenchmark
     PRIVATE
       FILE_SET std_vector_bench_h
       TYPE HEADERS
@@ -16,22 +15,22 @@ target_sources(
       "${CMAKE_CURRENT_SOURCE_DIR}/benchmark.cpp"
 )
 target_compile_features(
-  STD_VECTOR_BOOL_BENCHMARK
+  StdVectorBoolBenchmark
     PRIVATE
       cxx_std_20
 )
 target_link_libraries(
-  STD_VECTOR_BOOL_BENCHMARK
+  StdVectorBoolBenchmark
     PRIVATE
       benchmark::benchmark
 )
 set_target_properties(
-  STD_VECTOR_BOOL_BENCHMARK
+  StdVectorBoolBenchmark
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY
         "${CMAKE_BINARY_DIR}/benchmark/bin"
       OUTPUT_NAME
-        "${BENCHMARK_OUTPUT_NAME}"
+        "std-benchmark"
       INTERPROCEDURAL_OPTIMIZATION
         "$<${IPO_SUPPORT}:TRUE:FALSE>"
 )

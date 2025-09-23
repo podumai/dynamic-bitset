@@ -1,11 +1,11 @@
 message(STATUS "[${PROJECT_NAME}] Tests output directory:")
 message(STATUS " ${CMAKE_CURRENT_BINARY_DIR}/bin")
 
-add_executable(BITS_DYNAMIC_BITSET_TEST)
-set(TEST_OUTPUT_NAME "tests$<$<PLATFORM_ID:Windows>:.exe>")
+add_executable(BitsDynamicBitsetTest)
+set(TEST_OUTPUT_NAME "tests$<$<PLATFORM_ID:Windows>:.exe>" CACHE INTERNAL "")
 set(bits_dynamic_bitset_test_h "" CACHE INTERNAL "")
 target_sources(
-  BITS_DYNAMIC_BITSET_TEST
+  BitsDynamicBitsetTest
     PRIVATE
       FILE_SET bits_dynamic_bitset_test_h
       TYPE HEADERS
@@ -17,23 +17,23 @@ target_sources(
       "${CMAKE_CURRENT_SOURCE_DIR}/test.cpp"
 )
 target_precompile_headers(
-  BITS_DYNAMIC_BITSET_TEST
+  BitsDynamicBitsetTest
     PRIVATE
       "${CMAKE_SOURCE_DIR}/include/dynamic_bitset/dynamic_bitset.hpp"
 )
 target_compile_features(
-  BITS_DYNAMIC_BITSET_TEST
+  BitsDynamicBitsetTest
     PRIVATE
       cxx_std_20
 )
 target_link_libraries(
-  BITS_DYNAMIC_BITSET_TEST
+  BitsDynamicBitsetTest
     PRIVATE
       GTest::gtest
       GTest::gtest_main
 )
 set_target_properties(
-  BITS_DYNAMIC_BITSET_TEST
+  BitsDynamicBitsetTest
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY
         "${CMAKE_CURRENT_BINARY_DIR}/bin"
@@ -43,4 +43,4 @@ set_target_properties(
         "$<${IPO_SUPPORT}:TRUE:FALSE>"
 )
 
-gtest_discover_tests(BITS_DYNAMIC_BITSET_TEST)
+gtest_discover_tests(BitsDynamicBitsetTest)
