@@ -465,33 +465,33 @@ class DynamicBitset
      private:
       friend Iterator;
 
-#if defined(_MSVC_VER)
-      [[nodiscard]] friend operator==(
+#if defined(_MSC_VER)
+      [[nodiscard]] friend func operator==(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator!=(
+      [[nodiscard]] friend func operator!=(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator<(
+      [[nodiscard]] friend func operator<(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator<=(
+      [[nodiscard]] friend func operator<=(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator>(
+      [[nodiscard]] friend func operator>(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator>=(
+      [[nodiscard]] friend func operator>=(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
