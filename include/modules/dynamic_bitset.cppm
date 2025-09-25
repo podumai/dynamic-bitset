@@ -405,34 +405,34 @@ class DynamicBitset
      private:
       friend Iterator;
 
-#if defined(_MSVC_VER)
-      [[nodiscard]] friend operator==(
-        const Iterator&, //
+#if defined(_MSC_VER)
+      [[nodiscard]] constexpr friend func operator==(
+        const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator!=(
-        const Iterator&, //
+      [[nodiscard]] constexpr friend func operator!=(
+        const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator<(
-        const Iterator&, //
+      [[nodiscard]] constexpr friend func operator<(
+        const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator<=(
-        const Iterator&, //
+      [[nodiscard]] constexpr friend func operator<=(
+        const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator>(
-        const Iterator&, //
+      [[nodiscard]] constexpr friend func operator>(
+        const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend operator>=(
-        const Iterator&, //
+      [[nodiscard]] constexpr friend func operator>=(
+        const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 #endif
@@ -1132,10 +1132,10 @@ class DynamicBitset
    * @internal
    * @private
    * @brief Set bit with index to the specified value
-   * 
+   *
    * @param[in] index The zero-base index of the bit to access.
    * @param[in] value The boolean value `true/false`.
-   * 
+   *
    * @throws None (no-throw guarantee).
    */
   constexpr func SetBit(

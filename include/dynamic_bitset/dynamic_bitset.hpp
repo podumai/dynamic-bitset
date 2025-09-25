@@ -466,32 +466,32 @@ class DynamicBitset
       friend Iterator;
 
 #if defined(_MSC_VER)
-      [[nodiscard]] friend func operator==(
+      [[nodiscard]] constexpr friend func operator==(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend func operator!=(
+      [[nodiscard]] constexpr friend func operator!=(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend func operator<(
+      [[nodiscard]] constexpr friend func operator<(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend func operator<=(
+      [[nodiscard]] constexpr friend func operator<=(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend func operator>(
+      [[nodiscard]] constexpr friend func operator>(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
 
-      [[nodiscard]] friend func operator>=(
+      [[nodiscard]] constexpr friend func operator>=(
         const Iterator&,  //
         const Iterator&
       ) noexcept -> bool;
