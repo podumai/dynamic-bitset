@@ -1918,6 +1918,7 @@ class DynamicBitset
    * bits::DynamicBitset bits{100}; // Size() == 100, Capacity() == depeneds on sizeof(size_t)
    *                                // parameter multiplied by CHAR_BIT (size_t is the default block type)
    * bits.Clear();                  // Data() == nullptr, Size() == 0, Capacity() == 0
+   * @endcode
    */
   constexpr func Clear() noexcept -> void
   {
