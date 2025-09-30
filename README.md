@@ -3,6 +3,7 @@
 ![Ubuntu](https://github.com/podumai/dynamic-bitset/actions/workflows/ubuntu-latest.yaml/badge.svg)
 ![Windows](https://github.com/podumai/dynamic-bitset/actions/workflows/windows-latest.yaml/badge.svg)
 ![MacOs](https://github.com/podumai/dynamic-bitset/actions/workflows/macos-latest.yaml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Table of Contents
 
