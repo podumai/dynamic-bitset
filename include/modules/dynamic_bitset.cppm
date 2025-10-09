@@ -403,6 +403,7 @@ class DynamicBitset
     class BitWrapper final
     {
      private:
+      friend DynamicBitset;
       friend Iterator;
 
 #if defined(_MSC_VER)
@@ -620,7 +621,7 @@ class DynamicBitset
      * @par Example:
      * @code{.cpp}
      * bits::DynamicBitset bits{10};
-     * auto iter1{bits.begin()}; // iter1 points to the first bit
+     * auto iter1{bits.begin()};     // iter1 points to the first bit
      * decltype(iter1) iter2{iter1}; // iter2 points to the first bit as iter1
      * @endcode
      */
@@ -1398,13 +1399,15 @@ class DynamicBitset
   )
     : alloc_{AllocatorTraits::select_on_container_copy_construction(other.alloc_)}
   {
-    if (other.blocks_)
+    if (!other.blocks_)
     {
-      storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
-      bits_ = other.bits_;
-      blocks_ = other.blocks_;
-      std::copy(other.storage_, other.storage_ + other.blocks_, storage_);
+      return;
     }
+
+    storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
+    bits_ = other.bits_;
+    blocks_ = other.blocks_;
+    std::copy(other.storage_, other.storage_ + other.blocks_, storage_);
   }
 
   /**
@@ -1432,13 +1435,15 @@ class DynamicBitset
   )
     : alloc_{allocator}
   {
-    if (other.blocks_)
+    if (!other.blocks_)
     {
-      storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
-      bits_ = other.bits_;
-      blocks_ = other.blocks_;
-      std::copy(other.storage_, other.storage_ + other.blocks_, storage_);
+      return;
     }
+
+    storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
+    bits_ = other.bits_;
+    blocks_ = other.blocks_;
+    std::copy(other.storage_, other.storage_ + other.blocks_, storage_);
   }
 
   /**
@@ -1463,7 +1468,10 @@ class DynamicBitset
   constexpr DynamicBitset(
     DynamicBitset&& other
   ) noexcept
-    : storage_{other.storage_}, bits_{other.bits_}, blocks_{other.blocks_}, alloc_{std::move(other.alloc_)}
+    : storage_{other.storage_}  //
+    , bits_{other.bits_}
+    , blocks_{other.blocks_}
+    , alloc_{std::move(other.alloc_)}
   {
     other.storage_ = nullptr;
     other.bits_ = other.blocks_ = 0;
@@ -1527,18 +1535,19 @@ class DynamicBitset
     BlockIterator last
   )
   {
+    if (first == last)
+    {
+      return;
+    }
+
     SizeType size;
-    if constexpr (std::is_same_v<BlockIterator, Iterator> || std::is_same_v<BlockIterator, ConstIterator>)
+    if constexpr (std::is_same_v<std::remove_cv_t<BlockIterator>, Iterator>)
     {
       size = static_cast<SizeType>(last - first);
     }
     else
     {
       size = static_cast<SizeType>(std::distance(first, last)) << BlockInfo::kByteDivConst;
-    }
-    if (!size)
-    {
-      return;
     }
 
     try
@@ -1554,9 +1563,20 @@ class DynamicBitset
     }
 
     Pointer end{storage_ + blocks_};
-    for (Pointer begin{storage_}; begin != end; ++first, ++begin)
+    for (Pointer begin{storage_}; begin != end; ++begin)
     {
       *begin = static_cast<BlockType>(*first);
+      if constexpr (std::is_same_v<std::remove_cv_t<BlockIterator>, Iterator>)
+      {
+        std::advance(
+          first,
+          std::min<typename std::iterator_traits<BlockIterator>::difference_type>(last - first, BlockInfo::kBitsCount)
+        );
+      }
+      else
+      {
+        ++first;
+      }
     }
   }
 
@@ -1597,6 +1617,28 @@ class DynamicBitset
   [[nodiscard]] constexpr func Capacity() const noexcept -> SizeType
   {
     return blocks_ << BlockInfo::kByteDivConst;
+  }
+
+  /**
+   * @public
+   * @brief Returns the current number of blocks.
+   * @ingroup dynamic-bitset-Capacity
+   *
+   * @return The current number of blocks in storage.
+   *
+   * @throws None (no-throw guarantee).
+   *
+   * @par Example:
+   * @code{.cpp}
+   * bits::DynamicBitset bits;
+   * typename decltype(bits)::SizeType blocks_number{bits.NumBlocks()}; // blocks_number == 0
+   * bits.Reserve(1);
+   * blocks_number = bits.NumBlocks();                                  // blocks_number == 1
+   * @endcode
+   */
+  [[nodiscard]] constexpr func NumBlocks() const noexcept -> SizeType
+  {
+    return blocks_;
   }
 
   /**
@@ -3072,6 +3114,11 @@ class DynamicBitset
     {
       return false;
     }
+    else if (bits_ == 0)
+    {
+      return true;
+    }
+
     Pointer first_self{storage_};
     Pointer first_other{other.storage_};
     Pointer end{storage_ + CalculateCapacity(bits_) - 1};

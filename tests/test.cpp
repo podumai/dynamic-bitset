@@ -58,6 +58,22 @@ TEST_F(
 
 TEST_F(
   DynamicBitsetFixture,  //
+  ITERATOR_CONSTRUCTOR_TEST
+)
+{
+  using BlockType = typename decltype(filled_bitset)::BlockType;
+  {
+    bits::DynamicBitset<BlockType> test_bitset{filled_bitset.cbegin(), filled_bitset.cend()};
+    EXPECT_EQ(test_bitset, filled_bitset);
+  }
+  {
+    bits::DynamicBitset<BlockType> test_bitset{empty_bitset.cbegin(), empty_bitset.cend()};
+    EXPECT_EQ(test_bitset, empty_bitset);
+  }
+}
+
+TEST_F(
+  DynamicBitsetFixture,  //
   SIZE_METHOD_TEST
 )
 {
@@ -72,6 +88,15 @@ TEST_F(
 {
   EXPECT_EQ(0, empty_bitset.Capacity());
   EXPECT_EQ(64, filled_bitset.Capacity());
+}
+
+TEST_F(
+  DynamicBitsetFixture,  //
+  NUM_BLOCKS_METHOD_TEST
+)
+{
+  EXPECT_EQ(0, empty_bitset.NumBlocks());
+  EXPECT_EQ(1, filled_bitset.NumBlocks());
 }
 
 TEST_F(
@@ -576,7 +601,8 @@ TEST_F(
 }
 
 TEST_F(
-  DynamicBitsetFixture, COPY_RHS_TEST
+  DynamicBitsetFixture,  //
+  COPY_RHS_TEST
 )
 {
   empty_bitset = filled_bitset >> 8;
@@ -651,7 +677,7 @@ TEST_F(
 }
 
 TEST_F(
-  DynamicBitsetFixture, //
+  DynamicBitsetFixture,  //
   ITERATOR_ARITHMETIC_TEST
 )
 {
@@ -667,7 +693,7 @@ TEST_F(
 }
 
 TEST_F(
-  DynamicBitsetFixture, //
+  DynamicBitsetFixture,  //
   ITERATOR_BITWISE_TEST
 )
 {
