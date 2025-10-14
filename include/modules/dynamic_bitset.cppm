@@ -573,12 +573,12 @@ class DynamicBitset
 
       constexpr operator bool() const noexcept
       {
-        return byte_ != nullptr ? GetBit() : false;
+        return GetBit();
       }
 
       explicit constexpr operator char() const noexcept
       {
-        return byte_ != nullptr ? GetBit() | '0' : '0';
+        return GetBit() | '0';
       }
 
      private:
@@ -786,7 +786,7 @@ class DynamicBitset
      */
     constexpr func operator--() const noexcept -> const Iterator&
     {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit >> 0);
+      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit > 0);
 
       --wrapper_.bit_;
       return *this;
