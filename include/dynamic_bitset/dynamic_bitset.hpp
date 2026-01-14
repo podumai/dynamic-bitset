@@ -108,18 +108,18 @@
   #define BITS_DYNAMIC_BITSET_ASSERT(...)
 #endif
 
-#include <xmmintrin.h>
-
-#include <algorithm> /* std::copy, std::fill */
-#include <bit>       /* std::popcount */
-#include <climits>   /* CHAR_BIT */
-#include <concepts>  /* std::unsigned_integral */
-#include <cstdint>   /* std::size_t, std::ptrdiff_t */
-#include <format>    /* std::format */
-#include <iterator>  /* iterator_traits, Iterator concepts */
-#include <memory>    /* std::allocator<T> */
-#include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
-#include <utility>   /* std::exchange */
+#include <algorithm>   /* std::copy, std::fill */
+#include <array>       /* std::array */
+#include <bit>         /* std::popcount */
+#include <climits>     /* CHAR_BIT */
+#include <concepts>    /* std::unsigned_integral */
+#include <cstdint>     /* std::size_t, std::ptrdiff_t */
+#include <format>      /* std::format */
+#include <iterator>    /* iterator_traits, Iterator concepts */
+#include <memory>      /* std::allocator<T> */
+#include <stdexcept>   /* std::out_of_range, std::length_error, std::invalid_argument */
+#include <string_view> /* std::string_view */
+#include <utility>     /* std::exchange */
 
 #if CHAR_BIT != 8
   #error "bits::DynamicBitset only works on platforms with 8 bits per byte."
@@ -166,7 +166,7 @@ template<typename BlockIterator, typename TargetBlock>
 concept IsValidDynamicBitsetBlockIterator =
   std::is_convertible_v<decltype(*std::declval<BlockIterator>()), TargetBlock>;
 
-constexpr auto kStrBytesMapping = std::array<std::string_view, 256>{
+constexpr std::array<std::string_view, 256> kStrBytesMapping{
   "00000000"
   "00000001"
   "00000010"
@@ -2086,9 +2086,7 @@ class DynamicBitset {
    */
   constexpr func Set(SizeType index, bool value = false) -> DynamicBitset& {
     if (index >= bits_) {
-      throw std::out_of_range{
-        std::format("DynamicBitset::Set(SizeType, bool = false): index {} >= Size ({})", index, bits_)
-      };
+      throw std::out_of_range{"bits::DynamicBitset::Set(SizeType, bool = false): index is out of range"};
     }
 
     SetBit(index, value);
@@ -2115,7 +2113,7 @@ class DynamicBitset {
    */
   constexpr func Set() -> DynamicBitset& {
     if (!bits_) {
-      throw std::out_of_range{"DynamicBitset::Set() -> invalid number of bits"};
+      throw std::out_of_range{"bits::DynamicBitset::Set() -> invalid number of bits"};
     }
 
     std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kSet);
@@ -2142,7 +2140,7 @@ class DynamicBitset {
    */
   constexpr func Reset(SizeType index) -> DynamicBitset& {
     if (index >= bits_) {
-      throw std::out_of_range{std::format("DynamicBitset::Reset(SizeType): index {} >= Size ({})", index, bits_)};
+      throw std::out_of_range{"bits::DynamicBitset::Reset(SizeType): index is out of range"};
     }
 
     storage_[index >> BlockInfo::kByteDivConst] &= ~(BitMask::kBit << (index & BlockInfo::kByteModConst));
@@ -2169,7 +2167,7 @@ class DynamicBitset {
    */
   constexpr func Reset() -> DynamicBitset& {
     if (!bits_) {
-      throw std::out_of_range{"DynamicBitset::Reset() -> invalid number of bits"};
+      throw std::out_of_range{"bits::DynamicBitset::Reset() -> invalid number of bits"};
     }
 
     std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kReset);
@@ -2199,7 +2197,7 @@ class DynamicBitset {
    */
   constexpr func Flip(SizeType index) -> DynamicBitset& {
     if (index >= bits_) {
-      throw std::out_of_range{std::format("DynamicBitset::Flip(SizeType): index {} >= Size ({})", index, bits_)};
+      throw std::out_of_range{"bits::DynamicBitset::Flip(SizeType): index is out of range"};
     }
 
     storage_[index >> BlockInfo::kByteDivConst] ^= BitMask::kBit << (index & BlockInfo::kByteModConst);
@@ -2225,7 +2223,7 @@ class DynamicBitset {
    */
   constexpr func Flip() -> DynamicBitset& {
     if (!bits_) {
-      throw std::out_of_range{"DynamicBitset::Flip() -> invalid number of bits"};
+      throw std::out_of_range{"bits::DynamicBitset::Flip() -> invalid number of bits"};
     }
 
     std::for_each(storage_, storage_ + CalculateCapacity(bits_), [](BlockType& block) constexpr noexcept -> void {
@@ -2482,7 +2480,7 @@ class DynamicBitset {
    */
   [[nodiscard]] constexpr func At(SizeType index) -> BitReference {
     if (index >= bits_) {
-      throw std::out_of_range{std::format("bits::DynamicBitset::At(SizeType): index {} >= Size ({})", index, bits_)};
+      throw std::out_of_range{"bits::DynamicBitset::At(SizeType): index is out of range"};
     }
 
     return {storage_, static_cast<DifferenceType>(index)};
@@ -2516,9 +2514,7 @@ class DynamicBitset {
     BITS_DYNAMIC_BITSET_ASSERT(index < bits_);
 
     if (index >= bits_) {
-      throw std::out_of_range{
-        std::format("bits::DynamicBitset::At(SizeType) const: index {} >= Size ({})", index, bits_)
-      };
+      throw std::out_of_range{"bits::DynamicBitset::At(SizeType) const: index is out of range"};
     }
 
     return storage_[index >> BlockInfo::kByteDivConst] & BitMask::kBit << (index & BlockInfo::kByteModConst);
@@ -2650,7 +2646,7 @@ class DynamicBitset {
    */
   constexpr func operator&=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
     if (!(bits_ == other.bits_ && bits_ && other.bits_)) {
-      throw std::invalid_argument{"DynamicBitset::operator&= -> invalid storage size"};
+      throw std::invalid_argument{"bits::DynamicBitset::operator&=(): invalid storage size"};
     }
 
     std::for_each(
@@ -2690,7 +2686,7 @@ class DynamicBitset {
    */
   constexpr func operator|=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
     if (!(bits_ == other.bits_ && bits_ && other.bits_)) {
-      throw std::invalid_argument{"DynamicBitset::operator|= -> invalid storage size"};
+      throw std::invalid_argument{"bits::DynamicBitset::operator|=(): invalid storage size"};
     }
 
     std::for_each(
@@ -2730,7 +2726,7 @@ class DynamicBitset {
    */
   constexpr func operator^=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
     if (!(bits_ == other.bits_ && bits_ && other.bits_)) {
-      throw std::invalid_argument{"DynamicBitset::operator^= -> invalid storage size"};
+      throw std::invalid_argument{"bits::DynamicBitset::operator^=(): invalid storage size"};
     }
 
     std::for_each(
@@ -2764,7 +2760,7 @@ class DynamicBitset {
    */
   [[nodiscard]] constexpr func operator~() const /* clang-format off */ -> DynamicBitset /* clang-format on */ {
     if (!storage_) {
-      throw std::out_of_range{"DynamicBitset::operator~ -> invalid storage pointer (nullptr)"};
+      throw std::out_of_range{"bits::DynamicBitset::operator~(): invalid storage pointer (nullptr)"};
     }
 
     auto bits{*this};
@@ -2801,7 +2797,7 @@ class DynamicBitset {
    */
   constexpr func operator>>=(SizeType bit_offset) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
     if (!bits_) {
-      throw std::out_of_range{"DynamicBitset::operator>>= -> invalid storage pointer (nullptr)"};
+      throw std::out_of_range{"bits::DynamicBitset::operator>>=(SizeType): invalid storage pointer (nullptr)"};
     } else if (bit_offset >= bits_) {
       std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kReset);
     } else if (bit_offset) {
@@ -2850,7 +2846,7 @@ class DynamicBitset {
    */
   constexpr func operator<<=(SizeType bit_offset) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
     if (!bits_) {
-      throw std::out_of_range{"DynamicBitset::operator<<= -> invalid storage pointer (nullptr)"};
+      throw std::out_of_range{"bits::DynamicBitset::operator<<=(SizeType): invalid storage pointer (nullptr)"};
     } else if (bit_offset >= bits_) {
       std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kReset);
     } else if (bit_offset) {
