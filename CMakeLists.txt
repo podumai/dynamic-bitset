@@ -46,11 +46,15 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   )
 endif()
 
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
 include(CheckIPOSupported)
-include(cmake/ccache.cmake)
+if($ENV{DEV})
+  include(cmake/ccache.cmake)
+  include(cmake/clang_tidy.cmake)
+endif()
 
 set(IPO_SUPPORT "FALSE" CACHE INTERNAL "Apply interprocedural optimization for targets")
 check_ipo_supported(RESULT IPO_SUPPORT)

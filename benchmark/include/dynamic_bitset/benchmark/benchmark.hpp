@@ -50,23 +50,20 @@
  * @brief Namespace containing templated benchmark functions.
  * @namespace bits::benchmark
  */
-namespace bits::benchmark
-{
+namespace bits::benchmark {
 
 /**
  * @brief Namespace containing range generators for benchmakrs.
  * @namespace generators
  */
-namespace generators
-{
+namespace generators {
 
 /**
  * @internal
  * @brief Namespace containing constants for range generators.
  * @namespace __details
  */
-inline namespace __details
-{
+inline namespace __details {
 
 constexpr long long kDefaultStartRange{2};
 constexpr long long kDefaultLimitRange{INT_MAX};
@@ -76,42 +73,28 @@ constexpr int kDefaultDenseStep{200'000'039};
 }  // namespace __details
 
 template<long long Start, long long Limit, int Step>
-auto DenseGenerator(
-  ::benchmark::internal::Benchmark* b
-) -> void
-{
+auto DenseGenerator(::benchmark::internal::Benchmark* b) -> void {
   b->DenseRange(Start, Limit, Step);
 }
 
 template<int Multiplier, long long Start, long long Limit>
-auto MultiplicativeGenerator(
-  ::benchmark::internal::Benchmark* b
-) -> void
-{
+auto MultiplicativeGenerator(::benchmark::internal::Benchmark* b) -> void {
   b->RangeMultiplier(Multiplier)->Range(Start, Limit);
 }
 
 }  // namespace generators
 
 template<typename Container>
-auto BM_DefaultConstructor(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_DefaultConstructor(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     Container unit;
     ::benchmark::DoNotOptimize(unit);
   }
 }
 
 template<typename Container>
-auto BM_CopyConstructor(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_CopyConstructor(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -121,12 +104,8 @@ auto BM_CopyConstructor(
 }
 
 template<typename Container>
-auto BM_MoveConstructor(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_MoveConstructor(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -136,12 +115,8 @@ auto BM_MoveConstructor(
 }
 
 template<typename Container>
-auto BM_CopyAssignment(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_CopyAssignment(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit1(state.range(0));
     Container unit2;
@@ -152,12 +127,8 @@ auto BM_CopyAssignment(
 }
 
 template<typename Container>
-auto BM_MoveAssignment(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_MoveAssignment(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit1(state.range(0));
     Container unit2;
@@ -168,46 +139,32 @@ auto BM_MoveAssignment(
 }
 
 template<typename Container>
-auto BM_PushBack(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_PushBack(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit;
     state.ResumeTiming();
-    for (decltype(state.range(0)) i{}; i < state.range(0); ++i)
-    {
+    for (decltype(state.range(0)) i{}; i < state.range(0); ++i) {
       unit.PUSH_BACK_METHOD(!(i & 1));
     }
   }
 }
 
 template<typename Container>
-auto BM_PopBack(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_PopBack(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
-    for (decltype(state.range(0)) i{}; i < state.range(0); ++i)
-    {
+    for (decltype(state.range(0)) i{}; i < state.range(0); ++i) {
       unit.POP_BACK_METHOD();
     }
   }
 }
 
 template<typename Container>
-auto BM_Front(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Front(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit1(state.range(0));
     state.ResumeTiming();
@@ -216,12 +173,8 @@ auto BM_Front(
 }
 
 template<typename Container>
-auto BM_Back(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Back(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -230,17 +183,12 @@ auto BM_Back(
 }
 
 template<typename Container>
-auto BM_SubscriptTraverse(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_SubscriptTraverse(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
-    for (decltype(state.range(0)) i{}; i < state.range(0); ++i)
-    {
+    for (decltype(state.range(0)) i{}; i < state.range(0); ++i) {
       bool bit_value{unit[i]};
       ::benchmark::DoNotOptimize(bit_value);
     }
@@ -248,17 +196,12 @@ auto BM_SubscriptTraverse(
 }
 
 template<typename Container>
-auto BM_AtTraverse(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_AtTraverse(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
-    for (decltype(state.range(0)) i{}; i < state.range(0); ++i)
-    {
+    for (decltype(state.range(0)) i{}; i < state.range(0); ++i) {
       bool bit_value{unit.AT_METHOD(i)};
       ::benchmark::DoNotOptimize(bit_value);
     }
@@ -266,17 +209,12 @@ auto BM_AtTraverse(
 }
 
 template<typename Container>
-auto BM_TestTraverse(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_TestTraverse(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
-    for (decltype(state.range(0)) i{}; i < state.range(0); ++i)
-    {
+    for (decltype(state.range(0)) i{}; i < state.range(0); ++i) {
       bool bit_value{unit.TEST_METHOD(i)};
       ::benchmark::DoNotOptimize(bit_value);
     }
@@ -284,12 +222,8 @@ auto BM_TestTraverse(
 }
 
 template<typename Container>
-auto BM_Count(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Count(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -299,12 +233,8 @@ auto BM_Count(
 }
 
 template<typename Container>
-auto BM_Empty(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Empty(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -314,12 +244,8 @@ auto BM_Empty(
 }
 
 template<typename Container>
-auto BM_All(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_All(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -328,12 +254,8 @@ auto BM_All(
 }
 
 template<typename Container>
-auto BM_Any(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Any(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -342,12 +264,8 @@ auto BM_Any(
 }
 
 template<typename Container>
-auto BM_None(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_None(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -356,12 +274,8 @@ auto BM_None(
 }
 
 template<typename Container>
-auto BM_Set(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Set(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -371,12 +285,8 @@ auto BM_Set(
 }
 
 template<typename Container>
-auto BM_Reset(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Reset(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -386,12 +296,8 @@ auto BM_Reset(
 }
 
 template<typename Container>
-auto BM_Flip(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Flip(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -401,12 +307,8 @@ auto BM_Flip(
 }
 
 template<typename Container>
-auto BM_ToString(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_ToString(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -415,12 +317,8 @@ auto BM_ToString(
 }
 
 template<typename Container>
-auto BM_Inverse(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Inverse(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -429,12 +327,8 @@ auto BM_Inverse(
 }
 
 template<typename Container>
-auto BM_Swap(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Swap(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container a(state.range(0));
     Container b;
@@ -445,12 +339,8 @@ auto BM_Swap(
 }
 
 template<typename Container>
-auto BM_Size(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Size(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -460,12 +350,8 @@ auto BM_Size(
 }
 
 template<typename Container>
-auto BM_Capacity(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_Capacity(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -475,12 +361,8 @@ auto BM_Capacity(
 }
 
 template<typename Container>
-auto BM_BitwiseAND(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_BitwiseAND(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit1(state.range(0));
     Container unit2(state.range(0));
@@ -490,12 +372,8 @@ auto BM_BitwiseAND(
 }
 
 template<typename Container>
-auto BM_BitwiseOR(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_BitwiseOR(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit1(state.range(0));
     Container unit2(state.range(0));
@@ -505,12 +383,8 @@ auto BM_BitwiseOR(
 }
 
 template<typename Container>
-auto BM_BitwiseXOR(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_BitwiseXOR(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit1(state.range(0));
     Container unit2(state.range(0));
@@ -520,12 +394,8 @@ auto BM_BitwiseXOR(
 }
 
 template<typename Container>
-auto BM_BitwiseLeftShift(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_BitwiseLeftShift(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -535,12 +405,8 @@ auto BM_BitwiseLeftShift(
 }
 
 template<typename Container>
-auto BM_BitwiseRightShift(
-  ::benchmark::State& state
-) -> void
-{
-  for (auto _ : state)
-  {
+auto BM_BitwiseRightShift(::benchmark::State& state) -> void {
+  for (auto _ : state) {
     state.PauseTiming();
     Container unit(state.range(0));
     state.ResumeTiming();
@@ -551,13 +417,13 @@ auto BM_BitwiseRightShift(
 
 }  // namespace bits::benchmark
 
-#define BITS_DefaultDenseRangeGenerator             \
-  bits::benchmark::generators::DenseGenerator<      \
+#define BITS_DefaultDenseRangeGenerator              \
+  bits::benchmark::generators::DenseGenerator<       \
     bits::benchmark::generators::kDefaultStartRange, \
     bits::benchmark::generators::kDefaultLimitRange, \
     bits::benchmark::generators::kDefaultDenseStep>
-#define BITS_DefaultRangeGenerator                       \
-  bits::benchmark::generators::MultiplicativeGenerator<  \
+#define BITS_DefaultRangeGenerator                        \
+  bits::benchmark::generators::MultiplicativeGenerator<   \
     bits::benchmark::generators::kDefaultMultiplierRange, \
     bits::benchmark::generators::kDefaultStartRange,      \
     bits::benchmark::generators::kDefaultLimitRange>
@@ -702,26 +568,26 @@ auto BM_BitwiseRightShift(
     ->Name(BITS_BenchmarkNameGenerator(container, func)) \
     ->Range(bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange)
 
-#define BITS_LeftShiftBenchmark(container, func)                                                                \
-  BENCHMARK(bits::benchmark::BM_BitwiseLeftShift<container>)                                                    \
-    ->Name(BITS_BenchmarkNameGenerator(container, func))                                                        \
-    ->ArgsProduct(                                                                                              \
-      {benchmark::CreateRange(                                                                                  \
+#define BITS_LeftShiftBenchmark(container, func)                                                                  \
+  BENCHMARK(bits::benchmark::BM_BitwiseLeftShift<container>)                                                      \
+    ->Name(BITS_BenchmarkNameGenerator(container, func))                                                          \
+    ->ArgsProduct(                                                                                                \
+      {benchmark::CreateRange(                                                                                    \
          bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange         \
-       ),                                                                                                       \
-       benchmark::CreateRange(                                                                                  \
+       ),                                                                                                         \
+       benchmark::CreateRange(                                                                                    \
          1, bits::benchmark::generators::kDefaultLimitRange, bits::benchmark::generators::kDefaultMultiplierRange \
-       )}                                                                                                       \
+       )}                                                                                                         \
     )
 
-#define BITS_RightShiftBenchmark(container, func)                                                               \
-  BENCHMARK(bits::benchmark::BM_BitwiseRightShift<container>)                                                   \
-    ->Name(BITS_BenchmarkNameGenerator(container, func))                                                        \
-    ->ArgsProduct(                                                                                              \
-      {benchmark::CreateRange(                                                                                  \
+#define BITS_RightShiftBenchmark(container, func)                                                                 \
+  BENCHMARK(bits::benchmark::BM_BitwiseRightShift<container>)                                                     \
+    ->Name(BITS_BenchmarkNameGenerator(container, func))                                                          \
+    ->ArgsProduct(                                                                                                \
+      {benchmark::CreateRange(                                                                                    \
          bits::benchmark::generators::kDefaultStartRange, bits::benchmark::generators::kDefaultLimitRange         \
-       ),                                                                                                       \
-       benchmark::CreateRange(                                                                                  \
+       ),                                                                                                         \
+       benchmark::CreateRange(                                                                                    \
          1, bits::benchmark::generators::kDefaultLimitRange, bits::benchmark::generators::kDefaultMultiplierRange \
-       )}                                                                                                       \
+       )}                                                                                                         \
     )

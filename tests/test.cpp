@@ -1,21 +1,18 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <dynamic_bitset/dynamic_bitset.hpp>
 #include <memory_resource>
 
-class DynamicBitsetFixture : public testing::Test
-{
+class DynamicBitsetFixture : public testing::Test {
  protected:
   bits::DynamicBitset<> empty_bitset;
   bits::DynamicBitset<> filled_bitset{16, 0xff'ff};
 };
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  CONSTRUCTOR_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, ConstructorTest) {
   EXPECT_EQ(0, empty_bitset.Size()) << "empty object must be initialized with zero size";
   EXPECT_EQ(0, empty_bitset.Capacity()) << "empty object must be initialized with zero capacity";
   EXPECT_EQ(nullptr, empty_bitset.Data()) << "empty object must be initialized with empty storage";
@@ -27,24 +24,16 @@ TEST_F(
     << "Vector was initialized with 0xffff which is 0b1111111111111111";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  COPY_CONSTRUCTOR_TEST
-)
-{
-  bits::DynamicBitset<> test_vector{filled_bitset};
+TEST_F(DynamicBitsetFixture, CopyConstructorTest) {
+  auto test_vector = filled_bitset;
 
   EXPECT_EQ(test_vector.Size(), filled_bitset.Size());
   EXPECT_EQ(test_vector.Capacity(), filled_bitset.Capacity());
   EXPECT_EQ(test_vector.ToString(), filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  MOVE_CONSTRUCTOR_TEST
-)
-{
-  auto test_vector(std::move(filled_bitset));
+TEST_F(DynamicBitsetFixture, MoveConstructorTest) {
+  auto test_vector = std::move(filled_bitset);
 
   EXPECT_EQ(16, test_vector.Size());
   EXPECT_EQ(64, test_vector.Capacity());
@@ -56,80 +45,51 @@ TEST_F(
   EXPECT_EQ(empty_bitset.Data(), filled_bitset.Data()) << "Moved object must be empty with nullptr storage";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ITERATOR_CONSTRUCTOR_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, IteratorConstructorTest) {
   using BlockType = typename decltype(filled_bitset)::BlockType;
   {
-    bits::DynamicBitset<BlockType> test_bitset{filled_bitset.cbegin(), filled_bitset.cend()};
+    auto test_bitset = bits::DynamicBitset<BlockType>{filled_bitset.cbegin(), filled_bitset.cend()};
     EXPECT_EQ(test_bitset, filled_bitset);
   }
   {
-    bits::DynamicBitset<BlockType> test_bitset{empty_bitset.cbegin(), empty_bitset.cend()};
+    auto test_bitset = bits::DynamicBitset<BlockType>{empty_bitset.cbegin(), empty_bitset.cend()};
     EXPECT_EQ(test_bitset, empty_bitset);
   }
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  SIZE_METHOD_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, SizeMethodTest) {
   EXPECT_EQ(0, empty_bitset.Size());
   EXPECT_EQ(16, filled_bitset.Size());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  CAPACITY_METHOD_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, CapacityMethodTest) {
   EXPECT_EQ(0, empty_bitset.Capacity());
   EXPECT_EQ(64, filled_bitset.Capacity());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  NUM_BLOCKS_METHOD_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, NumBlocksMethodTest) {
   EXPECT_EQ(0, empty_bitset.NumBlocks());
   EXPECT_EQ(1, filled_bitset.NumBlocks());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  DATA_METHOD_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, DataMethodTest) {
   EXPECT_EQ(nullptr, empty_bitset.Data());
   EXPECT_NE(nullptr, filled_bitset.Data());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  MAX_SIZE_METHOD_TEST
-)
-{
-  EXPECT_EQ(std::numeric_limits<typename decltype(empty_bitset)::SizeType>::max(), empty_bitset.MaxSize());
+TEST_F(DynamicBitsetFixture, MaxSizeMethodTest) {
+  EXPECT_EQ(
+    std::allocator_traits<decltype(empty_bitset.GetAllocator())>::max_size(empty_bitset.GetAllocator()),
+    empty_bitset.MaxSize()
+  );
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  COUNT_METHOD_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, CountMethodTest) {
   EXPECT_EQ(0, empty_bitset.Count()) << "count on empty object must return zero";
   EXPECT_EQ(16, filled_bitset.Count());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  RESERVE_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, ReserveMethodTest) {
   EXPECT_THROW(empty_bitset.Reserve(std::numeric_limits<size_t>::max()), std::bad_array_new_length);
   empty_bitset.Reserve(10);
 
@@ -146,11 +106,7 @@ TEST_F(
   ASSERT_NE(nullptr, filled_bitset.Data());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  SHRINK_TO_FIT_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, ShrinkToFitMethodTest) {
   empty_bitset.Reserve(10);
   empty_bitset.ShrinkToFit();
 
@@ -167,47 +123,27 @@ TEST_F(
   EXPECT_NE(nullptr, filled_bitset.Data()) << "Nullptr must be set if object is empty but 'filled_bitset' is not";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ALL_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, AllMethodTest) {
   EXPECT_EQ(false, empty_bitset.All()) << "empty object can not containe any bits";
   EXPECT_EQ(true, filled_bitset.All());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ANY_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, AnyMethodTest) {
   EXPECT_EQ(false, empty_bitset.Any()) << "empty object can not contain any bits";
   EXPECT_EQ(true, filled_bitset.Any());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  NONE_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, NoneMethodTest) {
   EXPECT_EQ(true, empty_bitset.None()) << "empty object can not contain any bits";
   EXPECT_EQ(false, filled_bitset.None());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  EMPTY_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, EmptyMethodTest) {
   EXPECT_EQ(true, empty_bitset.Empty()) << "empty object can not contain any bits";
   EXPECT_EQ(false, filled_bitset.Empty());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  CLEAR_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, ClearMethodTest) {
   empty_bitset.Clear();
   filled_bitset.Clear();
 
@@ -216,11 +152,7 @@ TEST_F(
   EXPECT_EQ(empty_bitset.Data(), filled_bitset.Data()) << "Every object must be empty after clear";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  RESIZE_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, ResizeMethodTest) {
   empty_bitset.Resize(10, false);
   filled_bitset.Resize(20, true);
 
@@ -235,13 +167,8 @@ TEST_F(
   EXPECT_EQ(20, filled_bitset.Count()) << "New bits must be set due to second parameter -> true";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  PUSH_BACK_METHOD
-)
-{
-  for (std::size_t i{}; i < 10; ++i)
-  {
+TEST_F(DynamicBitsetFixture, PushBackMethodTest) {
+  for (auto i = std::size_t{}; i < 10; ++i) {
     empty_bitset.PushBack(true);
     filled_bitset.PushBack(true);
   }
@@ -250,66 +177,43 @@ TEST_F(
   EXPECT_EQ(26, filled_bitset.Count());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  POP_BACK_METHOD
-)
-{
-  for (std::size_t i{}; i < 16; ++i)
-  {
+TEST_F(DynamicBitsetFixture, PopBackMethodTest) {
+  for (auto i = std::size_t{}; i < 16; ++i) {
     filled_bitset.PopBack();
   }
   EXPECT_EQ(0, filled_bitset.Size());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  SET_INDEX_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, SetIndexMethodTest) {
   EXPECT_THROW(empty_bitset.Set(10), std::out_of_range);
 
-  for (std::size_t i{}; i < 4; ++i)
-  {
+  for (auto i = std::size_t{}; i < 4; ++i) {
     filled_bitset.Set(i, false);
   }
 
   EXPECT_EQ("0000111111111111", filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  SET_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, SetMethodTest) {
   EXPECT_THROW(empty_bitset.Set(), std::out_of_range);
 
-  bits::DynamicBitset<> test_vector{16};
+  auto test_vector = bits::DynamicBitset{16};
   test_vector.Set();
 
   EXPECT_EQ(false, test_vector.None()) << "'Set' method must set all bits to true";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  RESET_INDEX_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, ResetIndexMethodTest) {
   EXPECT_THROW(empty_bitset.Reset(10), std::out_of_range);
 
-  for (std::size_t i{}; i < 4; ++i)
-  {
+  for (auto i = std::size_t{}; i < 4; ++i) {
     filled_bitset.Reset(i);
   }
 
   EXPECT_EQ("0000111111111111", filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  RESET_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, ResetMethodTest) {
   EXPECT_THROW(empty_bitset.Reset(), std::out_of_range);
 
   filled_bitset.Reset();
@@ -317,26 +221,17 @@ TEST_F(
   EXPECT_EQ(true, filled_bitset.None()) << "Reset method must set all bits to false";
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  FLIP_INDEX_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, FlipIndexMethodTest) {
   EXPECT_THROW(empty_bitset.Flip(10), std::out_of_range);
 
-  for (std::size_t i{}; i < 4; ++i)
-  {
+  for (auto i = std::size_t{}; i < 4; ++i) {
     filled_bitset.Flip(i);
   }
 
   EXPECT_EQ("0000111111111111", filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  FLIP_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, FlipMethodTest) {
   EXPECT_THROW(empty_bitset.Flip(), std::out_of_range);
 
   filled_bitset.Flip();
@@ -344,11 +239,7 @@ TEST_F(
   EXPECT_EQ(true, filled_bitset.None());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  SWAP_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, SwapMethodTest) {
   empty_bitset.Swap(filled_bitset);
 
   EXPECT_EQ(16, empty_bitset.Size());
@@ -359,59 +250,38 @@ TEST_F(
   EXPECT_EQ(nullptr, filled_bitset.Data());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  SUBSCRIPT_OPERATOR_TEST
-)
-{
-  for (std::size_t i{}; i < 10; ++i)
-  {
-    ASSERT_EQ(true, filled_bitset[i]);
+TEST_F(DynamicBitsetFixture, SubscriptOperatorTest) {
+  for (auto i = std::size_t{}; i < 10; ++i) {
+    ASSERT_EQ(true, static_cast<bool>(filled_bitset[i]));
     filled_bitset[i] = false;
-    ASSERT_EQ(false, filled_bitset[i]);
+    ASSERT_EQ(false, static_cast<bool>(filled_bitset[i]));
     filled_bitset[i] = true;
-    ASSERT_EQ(true, filled_bitset[i]);
+    ASSERT_EQ(true, static_cast<bool>(filled_bitset[i]));
   }
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  AT_METHOD
-)
-{
+TEST_F(DynamicBitsetFixture, AtMethodTest) {
   EXPECT_THROW((void) empty_bitset.At(10), std::out_of_range);
   EXPECT_THROW((void) filled_bitset.At(20), std::out_of_range);
 
-  EXPECT_EQ(true, filled_bitset.At(0));
+  EXPECT_EQ(true, static_cast<bool>(filled_bitset.At(0)));
   filled_bitset.Reset(0);
-  EXPECT_EQ(false, filled_bitset.At(0));
+  EXPECT_EQ(false, static_cast<bool>(filled_bitset.At(0)));
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  FRONT_METHOD
-)
-{
-  EXPECT_EQ(true, filled_bitset.Front());
+TEST_F(DynamicBitsetFixture, FrontMethodTest) {
+  EXPECT_EQ(true, static_cast<bool>(filled_bitset.Front()));
   filled_bitset.Reset(0);
-  EXPECT_EQ(false, filled_bitset.Front());
+  EXPECT_EQ(false, static_cast<bool>(filled_bitset.Front()));
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  BACK_METHOD
-)
-{
-  EXPECT_EQ(true, filled_bitset.Back());
+TEST_F(DynamicBitsetFixture, BackMethodTest) {
+  EXPECT_EQ(true, static_cast<bool>(filled_bitset.Back()));
   filled_bitset.Reset(15);
-  EXPECT_EQ(false, filled_bitset.Back());
+  EXPECT_EQ(false, static_cast<bool>(filled_bitset.Back()));
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  COPY_ASSIGNMENT_OPERATOR
-)
-{
+TEST_F(DynamicBitsetFixture, CopyAssignmentOperatorTest) {
   empty_bitset = filled_bitset;
 
   EXPECT_EQ(empty_bitset.Size(), filled_bitset.Size());
@@ -420,11 +290,7 @@ TEST_F(
   EXPECT_EQ(empty_bitset.ToString(), filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  MOVE_ASSIGNMENT_OPERATOR
-)
-{
+TEST_F(DynamicBitsetFixture, MoveAssignmentOperatorTest) {
   empty_bitset = std::move(filled_bitset);
 
   EXPECT_EQ(16, empty_bitset.Size());
@@ -435,11 +301,7 @@ TEST_F(
   EXPECT_EQ(nullptr, filled_bitset.Data());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  BITWISE_AND_ASSIGNMENT_OPERATOR_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, BitwiseAndAssignmentOperatorTest) {
   EXPECT_THROW(empty_bitset &= filled_bitset, std::invalid_argument);
 
   empty_bitset.Resize(16, true);
@@ -457,11 +319,7 @@ TEST_F(
   EXPECT_EQ(true, filled_bitset.None());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  BITWISE_OR_ASSIGNMENT_OPERATOR_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, BitwiseOrAssignmentOperatorTest) {
   EXPECT_THROW(empty_bitset |= filled_bitset, std::invalid_argument);
 
   empty_bitset.Resize(16, true);
@@ -479,11 +337,7 @@ TEST_F(
   EXPECT_EQ(false, filled_bitset.None());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  BITWISE_XOR_ASSIGNMENT_OPERATOR_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, BitwiseXorAssignmentOperatorTest) {
   EXPECT_THROW(empty_bitset ^= filled_bitset, std::invalid_argument);
 
   empty_bitset.Resize(16, true);
@@ -500,11 +354,7 @@ TEST_F(
   EXPECT_EQ(16, filled_bitset.Count());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  BITWISE_INVERSE_OPERATOR_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, BitwiseInverseOperatorTest) {
   EXPECT_THROW((void) ~empty_bitset, std::out_of_range);
 
   empty_bitset = ~filled_bitset;
@@ -514,20 +364,12 @@ TEST_F(
   ASSERT_EQ(true, empty_bitset.None());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  TO_STRING_METHOD_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, ToStringMethodTest) {
   EXPECT_EQ("", empty_bitset.ToString());
   EXPECT_EQ("1111111111111111", filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  LHS_ASSIGNMENT_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, LhsAssignmentTest) {
   EXPECT_THROW(empty_bitset >>= 10, std::out_of_range);
 
   filled_bitset >>= 0;
@@ -555,11 +397,7 @@ TEST_F(
   EXPECT_EQ("0000011111111111", filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  RHS_ASSIGNMENT_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, RhsAssignmentTest) {
   EXPECT_THROW(empty_bitset <<= 10, std::out_of_range);
 
   filled_bitset <<= 0;
@@ -586,11 +424,7 @@ TEST_F(
   EXPECT_EQ("1111111111100000", filled_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  COPY_LHS_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, CopyLhsTest) {
   empty_bitset = filled_bitset << 8;
 
   ASSERT_EQ("1111111100000000", empty_bitset.ToString());
@@ -600,11 +434,7 @@ TEST_F(
   EXPECT_EQ("1111111111111110", empty_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  COPY_RHS_TEST
-)
-{
+TEST_F(DynamicBitsetFixture, CopyRhsTest) {
   empty_bitset = filled_bitset >> 8;
 
   ASSERT_EQ("0000000011111111", empty_bitset.ToString());
@@ -614,23 +444,17 @@ TEST_F(
   EXPECT_EQ("0111111111111111", empty_bitset.ToString());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ADVANCED_LHS_RHS_TEST
-)
-{
-  for (std::size_t i{}; i < 16; ++i)
-  {
+TEST_F(DynamicBitsetFixture, AdvancedLhsRhsTest) {
+  for (auto i = std::size_t{}; i < 16; ++i) {
     filled_bitset >>= 1;
-    ASSERT_EQ(false, filled_bitset[i]);
+    ASSERT_EQ(false, static_cast<bool>(filled_bitset[i]));
   }
 
   filled_bitset.Set();
 
-  for (std::size_t i{}; i < 16; ++i)
-  {
+  for (auto i = std::size_t{}; i < 16; ++i) {
     filled_bitset <<= 1;
-    ASSERT_EQ(false, filled_bitset[15 - i]);
+    ASSERT_EQ(false, static_cast<bool>(filled_bitset[15 - i]));
   }
 
   filled_bitset.Set();
@@ -660,13 +484,9 @@ TEST_F(
   EXPECT_EQ(true, filled_bitset.None());
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ITERATOR_PREDICATE_TEST
-)
-{
-  auto begin_iterator{filled_bitset.begin()};
-  auto end_iterator{filled_bitset.end()};
+TEST_F(DynamicBitsetFixture, IteratorPredicateTest) {
+  auto begin_iterator = filled_bitset.begin();
+  auto end_iterator = filled_bitset.end();
 
   EXPECT_EQ(false, begin_iterator == end_iterator);
   EXPECT_EQ(true, begin_iterator != end_iterator);
@@ -676,14 +496,10 @@ TEST_F(
   EXPECT_EQ(false, begin_iterator > end_iterator);
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ITERATOR_ARITHMETIC_TEST
-)
-{
-  auto begin_iterator{filled_bitset.begin()};
-  auto end_iterator{filled_bitset.end()};
-  typename decltype(filled_bitset)::SizeType bitset_size{filled_bitset.Size()};
+TEST_F(DynamicBitsetFixture, IteratorArithmeticTest) {
+  auto begin_iterator = filled_bitset.begin();
+  auto end_iterator = filled_bitset.end();
+  auto bitset_size = filled_bitset.Size();
 
   EXPECT_EQ(bitset_size, end_iterator - begin_iterator);
   ASSERT_EQ(false, begin_iterator + 0 == end_iterator);
@@ -692,48 +508,71 @@ TEST_F(
   EXPECT_EQ(false, begin_iterator + bitset_size != end_iterator);
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  ITERATOR_BITWISE_TEST
-)
-{
-  ASSERT_EQ(true, filled_bitset.begin() != filled_bitset.end());
-  for (auto& bit : filled_bitset)
+namespace test {
+
+constexpr auto kIsTruePredicate = [] [[nodiscard]] (auto&& value) constexpr noexcept -> bool {
+  return static_cast<bool>(std::forward<decltype(value)>(value));
+};
+
+constexpr auto kIsFalsePredicate = [] [[nodiscard]] (auto&& value) constexpr noexcept -> bool {
+  return !static_cast<bool>(std::forward<decltype(value)>(value));
+};
+
+}  // namespace test
+
+TEST_F(DynamicBitsetFixture, IteratorBitwiseTraverseTest) {
+  EXPECT_EQ(true, std::all_of(filled_bitset.begin(), filled_bitset.end(), test::kIsTruePredicate));
+  EXPECT_EQ(true, std::none_of(filled_bitset.begin(), filled_bitset.end(), test::kIsFalsePredicate));
+}
+
+TEST_F(DynamicBitsetFixture, IteratorBitwiseOrTest) {
   {
-    ASSERT_EQ(true, bit);
-    bit |= false;
-    ASSERT_EQ(true, bit);
-    bit |= true;
-    ASSERT_EQ(true, bit);
-    bit &= true;
-    ASSERT_EQ(true, bit);
-    bit &= false;
-    ASSERT_EQ(false, bit);
-    bit ^= true;
-    ASSERT_EQ(true, bit);
-    bit ^= false;
-    ASSERT_EQ(true, bit);
+    auto bitset = filled_bitset;
+    std::for_each(bitset.begin(), bitset.end(), [](auto&& value) constexpr noexcept -> void {
+      std::forward<decltype(value)>(value) |= false;
+    });
+    EXPECT_EQ(true, std::all_of(bitset.cbegin(), bitset.cend(), test::kIsTruePredicate));
+    std::for_each(bitset.begin(), bitset.end(), [](auto&& value) constexpr noexcept -> void {
+      std::forward<decltype(value)>(value) |= false;
+    });
+    EXPECT_EQ(true, std::all_of(bitset.cbegin(), bitset.cend(), test::kIsTruePredicate));
   }
 }
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  STRESS_TEST
-)
-{
-  bits::DynamicBitset<> test_vector;
+TEST_F(DynamicBitsetFixture, IteratorBitwiseAndTest) {
+  std::for_each(filled_bitset.begin(), filled_bitset.end(), [](auto&& value) constexpr noexcept -> void {
+    std::forward<decltype(value)>(value) &= true;
+  });
+  EXPECT_EQ(true, std::all_of(filled_bitset.cbegin(), filled_bitset.cend(), test::kIsTruePredicate));
+  std::for_each(filled_bitset.begin(), filled_bitset.end(), [](auto&& value) constexpr noexcept -> void {
+    std::forward<decltype(value)>(value) &= false;
+  });
+  EXPECT_EQ(true, std::none_of(filled_bitset.cbegin(), filled_bitset.cend(), test::kIsTruePredicate));
+}
 
-  constexpr std::size_t SIZE{static_cast<size_t>(std::numeric_limits<int>::max())};
+TEST_F(DynamicBitsetFixture, IteratorBitwiseXorTest) {
+  std::for_each(filled_bitset.begin(), filled_bitset.end(), [](auto&& value) constexpr noexcept -> void {
+    std::forward<decltype(value)>(value) ^= false;
+  });
+  EXPECT_EQ(true, std::all_of(filled_bitset.cbegin(), filled_bitset.cend(), test::kIsTruePredicate));
+  std::for_each(filled_bitset.begin(), filled_bitset.end(), [](auto&& value) constexpr noexcept -> void {
+    std::forward<decltype(value)>(value) ^= true;
+  });
+  EXPECT_EQ(true, std::none_of(filled_bitset.cbegin(), filled_bitset.cend(), test::kIsTruePredicate));
+}
 
-  for (std::size_t i{}; i < SIZE; ++i)
-  {
+TEST_F(DynamicBitsetFixture, StressTest) {
+  auto test_vector = bits::DynamicBitset{};
+
+  constexpr auto kMaxTestSize = std::size_t{std::numeric_limits<int>::max()};
+
+  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
     test_vector.PushBack(true);
   }
 
-  ASSERT_EQ(SIZE, test_vector.Count());
+  ASSERT_EQ(kMaxTestSize, test_vector.Count());
 
-  for (std::size_t i{}; i < SIZE; ++i)
-  {
+  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
     test_vector.PopBack();
   }
 
@@ -741,44 +580,37 @@ TEST_F(
 
   test_vector.ShrinkToFit();
 
-  constexpr std::size_t MID_SIZE{SIZE >> 1};
+  constexpr auto kMidTestSize = std::size_t{kMaxTestSize >> 1};
 
-  test_vector.Resize(SIZE, true);
+  test_vector.Resize(kMaxTestSize, true);
 
-  test_vector >>= MID_SIZE;
+  test_vector >>= kMidTestSize;
 
-  ASSERT_EQ(MID_SIZE + 1, test_vector.Count());
+  ASSERT_EQ(kMidTestSize + 1, test_vector.Count());
 
-  test_vector <<= MID_SIZE;
+  test_vector <<= kMidTestSize;
 
-  ASSERT_EQ(MID_SIZE + 1, test_vector.Count());
+  ASSERT_EQ(kMidTestSize + 1, test_vector.Count());
 
   test_vector.Clear();
 }
 
-std::size_t buffer[1000];
+TEST_F(DynamicBitsetFixture, TemplateAllocatorTest) {
+  constexpr auto kBufferSize = std::size_t{1000};
+  auto buffer = std::array<std::size_t, kBufferSize>{};
+  auto buffer_resource = std::pmr::monotonic_buffer_resource{buffer.data(), kBufferSize};
+  auto allocator = std::pmr::polymorphic_allocator<std::size_t>{&buffer_resource};
+  auto test_vector = bits::DynamicBitset<std::size_t, decltype(allocator)>{allocator};
 
-TEST_F(
-  DynamicBitsetFixture,  //
-  TEMPLATE_ALLOCATOR_TEST
-)
-{
-  std::pmr::monotonic_buffer_resource rs{static_cast<void*>(buffer), 1000};
-  std::pmr::polymorphic_allocator<std::size_t> pAlloc{&rs};
-  bits::DynamicBitset<typename std::allocator_traits<decltype(pAlloc)>::value_type, decltype(pAlloc)> test_vector{
-    pAlloc
-  };
-  constexpr std::size_t SIZE{7200};
+  constexpr auto kMaxTestSize = std::size_t{7200};  // NOLINT
 
-  for (std::size_t i{}; i < SIZE; ++i)
-  {
+  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
     test_vector.PushBack(true);
   }
 
-  ASSERT_EQ(SIZE, test_vector.Count());
+  ASSERT_EQ(kMaxTestSize, test_vector.Count());
 
-  for (std::size_t i{}; i < SIZE; ++i)
-  {
+  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
     test_vector.PopBack();
   }
 
@@ -786,17 +618,17 @@ TEST_F(
 
   test_vector.ShrinkToFit();
 
-  constexpr std::size_t MID_SIZE{SIZE >> 1};
+  constexpr auto kMidTestSize = std::size_t{kMaxTestSize >> 1};
 
-  test_vector.Resize(SIZE, true);
+  test_vector.Resize(kMaxTestSize, true);
 
-  test_vector >>= MID_SIZE;
+  test_vector >>= kMidTestSize;
 
-  ASSERT_EQ(MID_SIZE, test_vector.Count());
+  ASSERT_EQ(kMidTestSize, test_vector.Count());
 
-  test_vector <<= MID_SIZE;
+  test_vector <<= kMidTestSize;
 
-  ASSERT_EQ(MID_SIZE, test_vector.Count());
+  ASSERT_EQ(kMidTestSize, test_vector.Count());
 
   test_vector.Clear();
 }

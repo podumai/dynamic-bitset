@@ -1,7 +1,7 @@
 /**
  * @file dynamic_bitset/dynamic_bitset.hpp
  * @date 25-07-2025
- * @version 0.1.0
+ * @version 0.2.0
  * @copyright MIT License
  *
  * @author Kirill Morozov kirillsm05@gmail.com
@@ -61,7 +61,7 @@
  * @brief Current bits::DynamicBitset version
  * @def BITS_DYNAMIC_BITSET_VERSION
  */
-#define BITS_DYNAMIC_BITSET_VERSION "0.1.0"
+#define BITS_DYNAMIC_BITSET_VERSION "0.2.0"
 
 #if defined(func)
   #pragma push_macro("func")
@@ -108,6 +108,8 @@
   #define BITS_DYNAMIC_BITSET_ASSERT(...)
 #endif
 
+#include <xmmintrin.h>
+
 #include <algorithm> /* std::copy, std::fill */
 #include <bit>       /* std::popcount */
 #include <climits>   /* CHAR_BIT */
@@ -117,6 +119,7 @@
 #include <iterator>  /* iterator_traits, Iterator concepts */
 #include <memory>    /* std::allocator<T> */
 #include <stdexcept> /* std::out_of_range, std::length_error, std::invalid_argument */
+#include <utility>   /* std::exchange */
 
 #if CHAR_BIT != 8
   #error "bits::DynamicBitset only works on platforms with 8 bits per byte."
@@ -129,8 +132,7 @@
  *
  * @details
  */
-namespace __bits_details
-{
+namespace __bits_details {
 
 /**
  * @brief Validates the passed Block type.
@@ -161,7 +163,267 @@ concept IsValidDynamicBitsetAllocatorType =
  * @concept IsValidDynamicBitsetBlockIterator
  */
 template<typename BlockIterator, typename TargetBlock>
-concept IsValidDynamicBitsetBlockIterator = std::is_convertible_v<decltype(*BlockIterator{}), TargetBlock>;
+concept IsValidDynamicBitsetBlockIterator =
+  std::is_convertible_v<decltype(*std::declval<BlockIterator>()), TargetBlock>;
+
+constexpr auto kStrBytesMapping = std::array<std::string_view, 256>{
+  "00000000"
+  "00000001"
+  "00000010"
+  "00000011"
+  "00000100"
+  "00000101"
+  "00000110"
+  "00000111"
+  "00001000"
+  "00001001"
+  "00001010"
+  "00001011"
+  "00001100"
+  "00001101"
+  "00001110"
+  "00001111"
+  "00010000"
+  "00010001"
+  "00010010"
+  "00010011"
+  "00010100"
+  "00010101"
+  "00010110"
+  "00010111"
+  "00011000"
+  "00011001"
+  "00011010"
+  "00011011"
+  "00011100"
+  "00011101"
+  "00011110"
+  "00011111"
+  "00100000"
+  "00100001"
+  "00100010"
+  "00100011"
+  "00100100"
+  "00100101"
+  "00100110"
+  "00100111"
+  "00101000"
+  "00101001"
+  "00101010"
+  "00101011"
+  "00101100"
+  "00101101"
+  "00101110"
+  "00101111"
+  "00110000"
+  "00110001"
+  "00110010"
+  "00110011"
+  "00110100"
+  "00110101"
+  "00110110"
+  "00110111"
+  "00111000"
+  "00111001"
+  "00111010"
+  "00111011"
+  "00111100"
+  "00111101"
+  "00111110"
+  "00111111"
+  "01000000"
+  "01000001"
+  "01000010"
+  "01000011"
+  "01000100"
+  "01000101"
+  "01000110"
+  "01000111"
+  "01001000"
+  "01001001"
+  "01001010"
+  "01001011"
+  "01001100"
+  "01001101"
+  "01001110"
+  "01001111"
+  "01010000"
+  "01010001"
+  "01010010"
+  "01010011"
+  "01010100"
+  "01010101"
+  "01010110"
+  "01010111"
+  "01011000"
+  "01011001"
+  "01011010"
+  "01011011"
+  "01011100"
+  "01011101"
+  "01011110"
+  "01011111"
+  "01100000"
+  "01100001"
+  "01100010"
+  "01100011"
+  "01100100"
+  "01100101"
+  "01100110"
+  "01100111"
+  "01101000"
+  "01101001"
+  "01101010"
+  "01101011"
+  "01101100"
+  "01101101"
+  "01101110"
+  "01101111"
+  "01110000"
+  "01110001"
+  "01110010"
+  "01110011"
+  "01110100"
+  "01110101"
+  "01110110"
+  "01110111"
+  "01111000"
+  "01111001"
+  "01111010"
+  "01111011"
+  "01111100"
+  "01111101"
+  "01111110"
+  "01111111"
+  "10000000"
+  "10000001"
+  "10000010"
+  "10000011"
+  "10000100"
+  "10000101"
+  "10000110"
+  "10000111"
+  "10001000"
+  "10001001"
+  "10001010"
+  "10001011"
+  "10001100"
+  "10001101"
+  "10001110"
+  "10001111"
+  "10010000"
+  "10010001"
+  "10010010"
+  "10010011"
+  "10010100"
+  "10010101"
+  "10010110"
+  "10010111"
+  "10011000"
+  "10011001"
+  "10011010"
+  "10011011"
+  "10011100"
+  "10011101"
+  "10011110"
+  "10011111"
+  "10100000"
+  "10100001"
+  "10100010"
+  "10100011"
+  "10100100"
+  "10100101"
+  "10100110"
+  "10100111"
+  "10101000"
+  "10101001"
+  "10101010"
+  "10101011"
+  "10101100"
+  "10101101"
+  "10101110"
+  "10101111"
+  "10110000"
+  "10110001"
+  "10110010"
+  "10110011"
+  "10110100"
+  "10110101"
+  "10110110"
+  "10110111"
+  "10111000"
+  "10111001"
+  "10111010"
+  "10111011"
+  "10111100"
+  "10111101"
+  "10111110"
+  "10111111"
+  "11000000"
+  "11000001"
+  "11000010"
+  "11000011"
+  "11000100"
+  "11000101"
+  "11000110"
+  "11000111"
+  "11001000"
+  "11001001"
+  "11001010"
+  "11001011"
+  "11001100"
+  "11001101"
+  "11001110"
+  "11001111"
+  "11010000"
+  "11010001"
+  "11010010"
+  "11010011"
+  "11010100"
+  "11010101"
+  "11010110"
+  "11010111"
+  "11011000"
+  "11011001"
+  "11011010"
+  "11011011"
+  "11011100"
+  "11011101"
+  "11011110"
+  "11011111"
+  "11100000"
+  "11100001"
+  "11100010"
+  "11100011"
+  "11100100"
+  "11100101"
+  "11100110"
+  "11100111"
+  "11101000"
+  "11101001"
+  "11101010"
+  "11101011"
+  "11101100"
+  "11101101"
+  "11101110"
+  "11101111"
+  "11110000"
+  "11110001"
+  "11110010"
+  "11110011"
+  "11110100"
+  "11110101"
+  "11110110"
+  "11110111"
+  "11111000"
+  "11111001"
+  "11111010"
+  "11111011"
+  "11111100"
+  "11111101"
+  "11111110"
+  "11111111"
+};
 
 }  // namespace __bits_details
 
@@ -169,13 +431,14 @@ concept IsValidDynamicBitsetBlockIterator = std::is_convertible_v<decltype(*Bloc
  * @brief Namespace containing `DynamicBitset` implementation.
  * @namespace bits
  */
-namespace bits
-{
+namespace bits {
 
 template<
   __bits_details::IsValidDynamicBitsetBlockType Block,
   __bits_details::IsValidDynamicBitsetAllocatorType Allocator>
 class DynamicBitset;
+
+// clang-format off
 
 /**
  * @internal
@@ -184,8 +447,7 @@ class DynamicBitset;
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Allocator = std::allocator<size_t>>
-DynamicBitset()
-  /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
+DynamicBitset() -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>;
 
 /**
  * @internal
@@ -194,8 +456,7 @@ DynamicBitset()
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Allocator = std::allocator<size_t>>
-DynamicBitset(typename std::allocator_traits<Allocator>::size_type)
-  /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
+DynamicBitset(typename std::allocator_traits<Allocator>::size_type) -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>;
 
 /**
  * @internal
@@ -205,8 +466,9 @@ DynamicBitset(typename std::allocator_traits<Allocator>::size_type)
  */
 template<typename Allocator = std::allocator<size_t>>
 DynamicBitset(
-  typename std::allocator_traits<Allocator>::size_type, typename std::allocator_traits<Allocator>::value_type
-) /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
+  typename std::allocator_traits<Allocator>::size_type,
+  typename std::allocator_traits<Allocator>::value_type
+) -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>;
 
 /**
  * @internal
@@ -219,7 +481,9 @@ DynamicBitset(
   typename std::allocator_traits<Allocator>::size_type,
   typename std::allocator_traits<Allocator>::value_type,
   const Allocator&
-) /* clang-format off */ -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>; /* clang-format on */
+) -> DynamicBitset<typename std::allocator_traits<Allocator>::value_type, Allocator>;
+
+// clang-format on
 
 /**
  * @brief Container representing a set of bits.
@@ -236,8 +500,7 @@ DynamicBitset(
 template<
   __bits_details::IsValidDynamicBitsetBlockType Block = size_t,
   __bits_details::IsValidDynamicBitsetAllocatorType Allocator = std::allocator<Block>>
-class DynamicBitset
-{
+class DynamicBitset {
  public:
   class Iterator;
 
@@ -358,13 +621,7 @@ class DynamicBitset
    *
    * @details Underlying type is equivalent to BlockType template parameter specified.
    */
-  enum BitMask : BlockType
-  {
-    kUnknown,
-    kBit = 1,
-    kReset = 0,
-    kSet = static_cast<BlockType>(-1)
-  };
+  enum BitMask : BlockType { kUnknown, kBit = 1, kReset = 0, kSet = static_cast<BlockType>(-1) };
 
   /**
    * @internal
@@ -373,8 +630,7 @@ class DynamicBitset
    *
    * @struct BlockInfo
    */
-  struct BlockInfo final
-  {
+  struct BlockInfo final {
     /**
      * @internal
      * @static
@@ -394,6 +650,99 @@ class DynamicBitset
      */
     static constexpr SizeType kByteModConst{kBitsCount - 1};
   };
+  class BitReference final {
+    friend class DynamicBitset;
+
+   public:
+    constexpr BitReference(const Pointer ptr, const DifferenceType bit_position) noexcept
+      : byte_{ptr}, bit_{bit_position} { }
+
+    constexpr ~BitReference() = default;
+
+    constexpr func operator=(bool value) && noexcept -> BitReference&& {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
+
+      if (value) {
+        SetBit();
+      } else {
+        UnsetBit();
+      }
+
+      return static_cast<BitReference&&>(*this);
+    }
+
+   private:
+    [[nodiscard]] constexpr func GetBit() const noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
+
+      return byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] &
+             DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
+    }
+
+    constexpr func SetBit() noexcept -> void {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
+
+      byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] |=
+        DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
+    }
+
+    constexpr func UnsetBit() noexcept -> void {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
+
+      byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] &=
+        ~(DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst));
+    }
+
+   public:
+    constexpr func operator|=(bool value) && noexcept -> BitReference&& {
+      if (value) {
+        SetBit();
+      }
+      return static_cast<BitReference&&>(*this);
+    }
+
+    constexpr func operator&=(bool value) && noexcept -> BitReference&& {
+      if (!value) {
+        UnsetBit();
+      }
+      return static_cast<BitReference&&>(*this);
+    }
+
+    constexpr func operator^=(bool value) && noexcept -> BitReference&& {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
+
+      if (value) {
+        byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] ^=
+          DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
+      }
+      return static_cast<BitReference&&>(*this);
+    }
+
+    [[nodiscard]] constexpr func operator==(const BitReference& other) const&& noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ == other.byte_);
+
+      return bit_ == other.bit_;
+    }
+
+    [[nodiscard]] constexpr func operator!=(const BitReference& other) const&& noexcept -> bool {
+      return bit_ != other.bit_;
+    }
+
+    constexpr operator bool() const&& noexcept { return GetBit(); }
+
+    explicit constexpr operator char() const&& noexcept { return GetBit() | '0'; }
+
+   private:
+    explicit constexpr operator DynamicBitset::BlockType() const&& noexcept {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
+
+      return byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst];
+    }
+
+   private:
+    Pointer byte_;
+    DifferenceType bit_;
+  };
 
  public:
   /**
@@ -404,8 +753,7 @@ class DynamicBitset
    *
    * @warning Invalidated when `DynamicBitset` reallocation takes place.
    */
-  class Iterator
-  {
+  class Iterator {
    private:
     friend DynamicBitset;
 
@@ -424,7 +772,7 @@ class DynamicBitset
      * @brief An alias representing iterator pointer type (not in use).
      * @typedef pointer
      */
-    using pointer = typename DynamicBitset::pointer;
+    //    using pointer = typename DynamicBitset::pointer;
     /**
      * @brief An alias representing iterator pointer type using pascal case (not in use).
      * @typedef Pointer
@@ -434,7 +782,8 @@ class DynamicBitset
      * @brief An alias representing iterator underlying value type using snake case.
      * @typedef value_type
      */
-    using value_type = typename DynamicBitset::value_type;
+    //    using value_type = typename DynamicBitset::value_type;
+    using value_type = BitReference;
     /**
      * @brief An alias representing iterator underlying value type using pascal case.
      * @typedef ValueType
@@ -453,206 +802,13 @@ class DynamicBitset
 
    private:
     /**
-     * @class BitWrapper
+     * @class BitReference
      * @ingroup dynamic-bitset-iterators
      * @brief Proxy reference to a single bit (since bits arent't addressable).
      * @private
      *
      * @warning Invalidated when `DynamicBitset` reallocation takes place.
      */
-    class BitWrapper final
-    {
-     private:
-      friend DynamicBitset;
-      friend Iterator;
-
-#if defined(_MSC_VER)
-      [[nodiscard]] constexpr friend func operator==(
-        const Iterator&,  //
-        const Iterator&
-      ) noexcept -> bool;
-
-      [[nodiscard]] constexpr friend func operator!=(
-        const Iterator&,  //
-        const Iterator&
-      ) noexcept -> bool;
-
-      [[nodiscard]] constexpr friend func operator<(
-        const Iterator&,  //
-        const Iterator&
-      ) noexcept -> bool;
-
-      [[nodiscard]] constexpr friend func operator<=(
-        const Iterator&,  //
-        const Iterator&
-      ) noexcept -> bool;
-
-      [[nodiscard]] constexpr friend func operator>(
-        const Iterator&,  //
-        const Iterator&
-      ) noexcept -> bool;
-
-      [[nodiscard]] constexpr friend func operator>=(
-        const Iterator&,  //
-        const Iterator&
-      ) noexcept -> bool;
-#endif
-
-     public:
-      constexpr BitWrapper() noexcept = default;
-
-      constexpr BitWrapper(
-        Pointer ptr,  //
-        DifferenceType bit_position
-      ) noexcept
-        : byte_{ptr}  //
-        , bit_{bit_position}
-      { }
-
-      constexpr BitWrapper(  //
-        const BitWrapper& other
-      ) noexcept = default;
-
-      constexpr ~BitWrapper() = default;
-
-      constexpr func operator=(
-        bool value
-      ) noexcept -> BitWrapper&
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
-
-        if (value)
-        {
-          byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] |=
-            DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
-        }
-        else
-        {
-          byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] &=
-            ~(DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst));
-        }
-
-        return *this;
-      }
-
-     private:
-      [[nodiscard]] constexpr func GetBit() const noexcept -> bool
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
-
-        return byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] &
-               DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
-      }
-
-      constexpr func SetBit() noexcept -> void
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
-
-        byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] |=
-          DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
-      }
-
-      constexpr func UnsetBit() noexcept -> void
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
-
-        byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] &=
-          ~(DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst));
-      }
-
-     public:
-      constexpr func operator=(
-        const BitWrapper& other
-      ) noexcept -> BitWrapper&
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(this != &other);
-
-        if (other.GetBit())
-        {
-          SetBit();
-        }
-        else
-        {
-          UnsetBit();
-        }
-
-        return *this;
-      }
-
-      constexpr func operator|=(
-        bool value
-      ) noexcept -> BitWrapper&
-      {
-        if (value)
-        {
-          SetBit();
-        }
-        return *this;
-      }
-
-      constexpr func operator&=(
-        bool value
-      ) noexcept -> BitWrapper&
-      {
-        if (!value)
-        {
-          UnsetBit();
-        }
-        return *this;
-      }
-
-      constexpr func operator^=(
-        bool value
-      ) noexcept -> BitWrapper&
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
-
-        if (value)
-        {
-          byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst] ^=
-            DynamicBitset::BitMask::kBit << (static_cast<DynamicBitset::SizeType>(bit_) & BlockInfo::kByteModConst);
-        }
-        return *this;
-      }
-
-      [[nodiscard]] constexpr func operator==(
-        const BitWrapper& other
-      ) const noexcept -> bool
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ == other.byte_);
-
-        return bit_ == other.bit_;
-      }
-
-      [[nodiscard]] constexpr func operator!=(
-        const BitWrapper& other
-      ) const noexcept -> bool
-      {
-        return !(*this == other);
-      }
-
-      constexpr operator bool() const noexcept
-      {
-        return GetBit();
-      }
-
-      explicit constexpr operator char() const noexcept
-      {
-        return GetBit() | '0';
-      }
-
-     private:
-      explicit constexpr operator DynamicBitset::BlockType() const noexcept
-      {
-        BITS_DYNAMIC_BITSET_ASSERT(byte_ != nullptr);
-
-        return byte_[static_cast<DynamicBitset::SizeType>(bit_) >> BlockInfo::kByteDivConst];
-      }
-
-     private:
-      Pointer byte_;
-      DifferenceType bit_;
-    };
 
    public:
     /**
@@ -664,12 +820,7 @@ class DynamicBitset
     constexpr Iterator() noexcept = default;
 
    private:
-    constexpr Iterator(
-      Pointer ptr,  //
-      DifferenceType bit_position
-    ) noexcept
-      : wrapper_{ptr, bit_position}
-    { }
+    constexpr Iterator(Pointer ptr, DifferenceType bit_position) noexcept : byte_{ptr}, bit_{bit_position} { }
 
    public:
     /**
@@ -685,9 +836,7 @@ class DynamicBitset
      * decltype(iter1) iter2{iter1}; // iter2 points to the first bit as iter1
      * @endcode
      */
-    constexpr Iterator(  //
-      const Iterator&
-    ) noexcept = default;
+    constexpr Iterator(const Iterator&) noexcept = default;
 
     /**
      * @public
@@ -714,13 +863,11 @@ class DynamicBitset
      * it1.Swap(it2);
      * @endcode
      */
-    constexpr func Swap(
-      Iterator& other
-    ) noexcept -> void
-    {
+    constexpr func Swap(Iterator& other) noexcept -> void {
       BITS_DYNAMIC_BITSET_ASSERT(this != &other);
 
-      wrapper_.Swap(other.wrapper_);
+      std::swap(byte_, other.byte_);
+      std::swap(bit_, other.bit_);
     }
 
     /**
@@ -739,19 +886,8 @@ class DynamicBitset
      * }
      * @endcode
      */
-    constexpr func operator++() noexcept -> Iterator&
-    {
-      ++wrapper_.bit_;
-      return *this;
-    }
-
-    /**
-     * @public
-     * @throws None (no-throw guarantee)
-     */
-    constexpr func operator++() const noexcept -> const Iterator&
-    {
-      ++wrapper_.bit_;
+    constexpr func operator++() noexcept -> Iterator& {
+      ++bit_;
       return *this;
     }
 
@@ -759,60 +895,25 @@ class DynamicBitset
      * @public
      * @throws None (no-throw guarantee).
      */
-    constexpr func operator++(
-      int
-    ) noexcept -> Iterator
-    {
-      return {wrapper_.byte_, wrapper_.bit_++};
-    }
-
-    /**
-     * @public
-     * @throws None (no-throw guarantee)
-     */
-    constexpr func operator++(
-      int
-    ) const noexcept -> const Iterator
-    {
-      return {wrapper_.byte_, wrapper_.bit_++};
-    }
+    constexpr func operator++(int) noexcept -> Iterator { return {byte_, bit_++}; }
 
     /**
      * @public
      * @param[in] index
      * @throws None (no-throw guarantee).
      */
-    constexpr func operator+=(
-      DifferenceType index
-    ) noexcept -> Iterator&
-    {
-      wrapper_.bit_ += index;
+    constexpr func operator+=(DifferenceType index) noexcept -> Iterator& {
+      bit_ += index;
       return *this;
     }
 
     /**
-     * @public
-     * @param[in] index
-     * @throws None (no-throw guarantee)
-     */
-    constexpr func operator+=(
-      DifferenceType index
-    ) const noexcept -> const Iterator&
-    {
-      wrapper_.bit_ += index;
-      return *this;
-    }
-
-    /**
-     * @public
+     * @param[in] iterator
      * @param[in] index
      * @throws None (no-throw guarantee).
      */
-    [[nodiscard]] constexpr func operator+(
-      DifferenceType index
-    ) const noexcept -> Iterator
-    {
-      return {wrapper_.byte_, wrapper_.bit_ + index};
+    [[nodiscard]] friend constexpr func operator+(const Iterator& iterator, DifferenceType index) noexcept -> Iterator {
+      return {iterator.byte_, iterator.bit_ + index};
     }
 
     /**
@@ -820,35 +921,18 @@ class DynamicBitset
      * @param[in] iter
      * @throws None (no-throw guarantee).
      */
-    [[nodiscard]] friend constexpr func operator+(
-      DifferenceType index,  //
-      const Iterator& iter
-    ) noexcept -> Iterator
-    {
-      return {iter.wrapper_.byte_, iter.wrapper_.bit_ + index};
+    [[nodiscard]] friend constexpr func operator+(DifferenceType index, const Iterator& iterator) noexcept -> Iterator {
+      return {iterator.byte_, iterator.bit_ + index};
     }
 
     /**
      * @public
      * @throws None (no-throw guarantee).
      */
-    constexpr func operator--() noexcept -> Iterator&
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit_ > 0);
+    constexpr func operator--() noexcept -> Iterator& {
+      BITS_DYNAMIC_BITSET_ASSERT(bit_ > 0);
 
-      --wrapper_.bit_;
-      return *this;
-    }
-
-    /**
-     * @public
-     * @throws None (no-throw guarantee)
-     */
-    constexpr func operator--() const noexcept -> const Iterator&
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit > 0);
-
-      --wrapper_.bit_;
+      --bit_;
       return *this;
     }
 
@@ -856,26 +940,10 @@ class DynamicBitset
      * @public
      * @throws None (no-throw guarantee).
      */
-    constexpr func operator--(
-      int
-    ) noexcept -> Iterator
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit_ > 0);
+    constexpr func operator--(int) noexcept -> Iterator {
+      BITS_DYNAMIC_BITSET_ASSERT(bit_ > 0);
 
-      return {wrapper_.byte_, wrapper_.bit_--};
-    }
-
-    /**
-     * @public
-     * @throws None (no-throw guarantee)
-     */
-    constexpr func operator--(
-      int
-    ) const noexcept -> const Iterator
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit_ > 0);
-
-      return {wrapper_.byte_, wrapper_.bit_--};
+      return {byte_, bit_--};
     }
 
     /**
@@ -883,45 +951,22 @@ class DynamicBitset
      * @param[in] index
      * @throws None (no-throw guarantee).
      */
-    constexpr func operator-=(
-      DifferenceType index
-    ) noexcept -> Iterator&
-    {
-      wrapper_.bit_ -= index;
+    constexpr func operator-=(DifferenceType index) noexcept -> Iterator& {
+      bit_ -= index;
 
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit_ >= 0);
+      BITS_DYNAMIC_BITSET_ASSERT(bit_ >= 0);
 
       return *this;
     }
 
     /**
-     * @public
-     * @param[in] index
-     * @throws None (no-throw guarantee)
-     */
-    constexpr func operator-=(
-      DifferenceType index
-    ) const noexcept -> const Iterator&
-    {
-      wrapper_.bit_ -= index;
-
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit_ >= 0);
-
-      return *this;
-    }
-
-    /**
-     * @public
      * @param[in] index
      * @throws None (no-throw guarantee).
      */
-    [[nodiscard]] constexpr func operator-(
-      DifferenceType index
-    ) const noexcept -> Iterator
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.bit_ - index >= 0);
+    [[nodiscard]] friend constexpr func operator-(const Iterator& iterator, DifferenceType index) noexcept -> Iterator {
+      BITS_DYNAMIC_BITSET_ASSERT(iterator.bit_ - index >= 0);
 
-      return {wrapper_.byte_, wrapper_.bit_ - index};
+      return {iterator.byte_, iterator.bit_ - index};
     }
 
     /**
@@ -929,13 +974,10 @@ class DynamicBitset
      * @param[in] other
      * @throws None (no-throw guarantee).
      */
-    [[nodiscard]] constexpr func operator-(
-      const Iterator& other
-    ) const noexcept -> DifferenceType
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(wrapper_.byte_ == other.wrapper_.byte_);
+    [[nodiscard]] constexpr func operator-(const Iterator& other) const noexcept -> DifferenceType {
+      BITS_DYNAMIC_BITSET_ASSERT(byte_ == other.byte_);
 
-      return wrapper_.bit_ - other.wrapper_.bit_;
+      return bit_ - other.bit_;
     }
 
     /**
@@ -954,14 +996,10 @@ class DynamicBitset
      * assert(bits.begin() < bits.end());
      * @endcode
      */
-    [[nodiscard]] friend constexpr func operator<(
-      const Iterator& lhs,  //
-      const Iterator& rhs
-    ) noexcept -> bool
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
+    [[nodiscard]] friend constexpr func operator<(const Iterator& lhs, const Iterator& rhs) noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.byte_ == rhs.byte_);
 
-      return lhs.wrapper_.bit_ < rhs.wrapper_.bit_;
+      return lhs.bit_ < rhs.bit_;
     }
 
     /**
@@ -983,14 +1021,10 @@ class DynamicBitset
      * assert(bits.begin() <= bits.end());
      * @endcode
      */
-    [[nodiscard]] friend constexpr func operator<=(
-      const Iterator& lhs,  //
-      const Iterator& rhs
-    ) noexcept -> bool
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
+    [[nodiscard]] friend constexpr func operator<=(const Iterator& lhs, const Iterator& rhs) noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.byte_ == rhs.byte_);
 
-      return lhs.wrapper_.bit_ <= rhs.wrapper_.bit_;
+      return lhs.bit_ <= rhs.bit_;
     }
 
     /**
@@ -1012,14 +1046,10 @@ class DynamicBitset
      * assert(bits.begin() + 5 > bits.begin());
      * @endcode
      */
-    [[nodiscard]] friend constexpr func operator>(
-      const Iterator& lhs,  //
-      const Iterator& rhs
-    ) noexcept -> bool
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
+    [[nodiscard]] friend constexpr func operator>(const Iterator& lhs, const Iterator& rhs) noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.byte_ == rhs.byte_);
 
-      return lhs.wrapper_.bit_ > rhs.wrapper_.bit_;
+      return lhs.bit_ > rhs.bit_;
     }
 
     /**
@@ -1041,14 +1071,10 @@ class DynamicBitset
      * assert(bits.begin() + 5 >= bits.begin());
      * @endcode
      */
-    [[nodiscard]] friend constexpr func operator>=(
-      const Iterator& lhs,  //
-      const Iterator& rhs
-    ) noexcept -> bool
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
+    [[nodiscard]] friend constexpr func operator>=(const Iterator& lhs, const Iterator& rhs) noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.byte_ == rhs.byte_);
 
-      return lhs.wrapper_.bit_ >= rhs.wrapper_.bit_;
+      return lhs.bit_ >= rhs.bit_;
     }
 
     /**
@@ -1072,14 +1098,10 @@ class DynamicBitset
      * }
      * @endcode
      */
-    [[nodiscard]] friend constexpr func operator==(
-      const Iterator& lhs,  //
-      const Iterator& rhs
-    ) noexcept -> bool
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
+    [[nodiscard]] friend constexpr func operator==(const Iterator& lhs, const Iterator& rhs) noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.byte_ == rhs.byte_);
 
-      return lhs.wrapper_.bit_ == rhs.wrapper_.bit_;
+      return lhs.bit_ == rhs.bit_;
     }
 
     /**
@@ -1103,44 +1125,31 @@ class DynamicBitset
      * }
      * @endcode
      */
-    [[nodiscard]] friend constexpr func operator!=(
-      const Iterator& lhs,  //
-      const Iterator& rhs
-    ) noexcept -> bool
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(lhs.wrapper_.byte_ == rhs.wrapper_.byte_);
+    [[nodiscard]] friend constexpr func operator!=(const Iterator& lhs, const Iterator& rhs) noexcept -> bool {
+      BITS_DYNAMIC_BITSET_ASSERT(lhs.byte_ == rhs.byte_);
 
-      return lhs.wrapper_.bit_ != rhs.wrapper_.bit_;
+      return lhs.bit_ != rhs.bit_;
     }
 
     /**
      * @public
      * @throws None (no-throw guarantee).
      */
-    [[nodiscard]] constexpr func operator*() noexcept -> BitWrapper&
-    {
-      return wrapper_;
-    }
+    [[nodiscard]] constexpr func operator*() noexcept -> BitReference { return {byte_, bit_}; }
 
     /**
      * @public
      * @throws None (no-throw guarantee)
      */
-    [[nodiscard]] constexpr func operator*() const noexcept -> bool
-    {
-      return wrapper_.GetBit();
-    }
+    //    [[nodiscard]] constexpr func operator*() const noexcept -> bool { return BitReference{byte_, bit_}; }
 
     /**
      * @public
      * @param[in] index
      * @throws None (no-throw guarantee).
      */
-    [[nodiscard]] constexpr func operator[](
-      DifferenceType index
-    ) noexcept -> BitWrapper
-    {
-      return {wrapper_.byte_, wrapper_.bit_ + index};
+    [[nodiscard]] constexpr func operator[](DifferenceType index) noexcept -> BitReference {
+      return {byte_, bit_ + index};
     }
 
     /**
@@ -1148,29 +1157,17 @@ class DynamicBitset
      * @param[in] index
      * @throws None (no-throw guarantee)
      */
-    [[nodiscard]] constexpr func operator[](
-      DifferenceType index
-    ) const noexcept -> bool
-    {
-      return *(*this + index);
-    }
+    [[nodiscard]] constexpr func operator[](DifferenceType index) const noexcept -> bool { return *(*this + index); }
 
     /**
      * @public
      * @throws None (no-throw guarantee).
      */
-    constexpr func operator=(
-      const Iterator& other
-    ) noexcept -> Iterator&
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(this != &other);
-      wrapper_.byte_ = other.wrapper_.byte_;
-      wrapper_.bit_ = other.wrapper_.bit_;
-      return *this;
-    }
+    constexpr func operator=(const Iterator& other) noexcept -> Iterator& = default;
 
    private:
-    mutable BitWrapper wrapper_;
+    Pointer byte_;
+    DifferenceType bit_;
   };
 
  private:
@@ -1182,10 +1179,7 @@ class DynamicBitset
    *
    * @throws None (no-throw guarantee).
    */
-  [[nodiscard]] static constexpr func CalculateCapacity(
-    SizeType bits
-  ) noexcept -> SizeType
-  {
+  [[nodiscard]] static constexpr func CalculateCapacity(SizeType bits) noexcept -> SizeType {
     return (bits >> BlockInfo::kByteDivConst) + (bits & BlockInfo::kByteModConst ? 1 : 0);
   }
 
@@ -1199,67 +1193,33 @@ class DynamicBitset
    *
    * @throws None (no-throw guarantee).
    */
-  constexpr func SetBit(
-    SizeType index,  //
-    bool value
-  ) noexcept -> void
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(storage_ != nullptr);
+  constexpr func SetBit(SizeType index, bool value) noexcept -> void {
+    BITS_DYNAMIC_BITSET_ASSERT(storage_);
 
-    if (value)
-    {
+    if (value) {
       storage_[index >> BlockInfo::kByteDivConst] |= BitMask::kBit << (index & BlockInfo::kByteModConst);
-    }
-    else
-    {
+    } else {
       storage_[index >> BlockInfo::kByteDivConst] &= ~(BitMask::kBit << (index & BlockInfo::kByteModConst));
     }
   }
 
-  [[nodiscard]] constexpr func ResizeFactor() const noexcept -> bool
-  {
+  [[nodiscard]] constexpr func ResizeFactor() const noexcept -> bool {
     return (bits_ >> BlockInfo::kByteDivConst) >= blocks_;
   }
 
-  static constexpr func CopyData(
-    Pointer source,  //
-    Pointer destination,
-    SizeType n
-  ) noexcept -> void
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(source != nullptr && destination != nullptr);
-
-    Pointer end{source + n};
-
-    [[likely]] while (source < end)
-    {
-      *destination++ = *source++;
-    }
-  }
-
-  static constexpr func FillData(
-    Pointer source,  //
-    SizeType n,
-    SizeType value
-  ) noexcept -> void
-  {
+  static constexpr func FillData(Pointer source, SizeType n, SizeType value) noexcept -> void {
     BITS_DYNAMIC_BITSET_ASSERT(source != nullptr);
 
     Pointer end{source + n};
 
-    [[likely]] while (source < end)
-    {
-      *source++ = value;
-    }
+    [[likely]] while (source < end) { *source++ = value; }
   }
 
-  constexpr func GrowInit() -> void
-  {
+  constexpr func GrowInit() -> void {
     const SizeType new_size{blocks_ + (blocks_ >> 1) + 2};
     Pointer temp_ptr{AllocatorTraits::allocate(alloc_, new_size, storage_)};
 
-    if (storage_)
-    {
+    if (storage_) {
       std::copy(storage_, storage_ + blocks_, temp_ptr);
       AllocatorTraits::deallocate(alloc_, storage_, blocks_);
     }
@@ -1287,10 +1247,7 @@ class DynamicBitset
    * }
    * @endcode
    */
-  [[nodiscard]] constexpr func begin() noexcept -> Iterator
-  {
-    return {storage_, 0};
-  }
+  [[nodiscard]] constexpr func begin() noexcept -> Iterator { return {storage_, 0}; }
 
   /**
    * @public
@@ -1309,10 +1266,7 @@ class DynamicBitset
    * }
    * @endcode
    */
-  [[nodiscard]] constexpr func end() noexcept -> Iterator
-  {
-    return {storage_, static_cast<DifferenceType>(bits_)};
-  }
+  [[nodiscard]] constexpr func end() noexcept -> Iterator { return {storage_, static_cast<DifferenceType>(bits_)}; }
 
   /**
    * @public
@@ -1331,10 +1285,7 @@ class DynamicBitset
    * }
    * @endcode
    */
-  [[nodiscard]] constexpr func cbegin() const noexcept -> ConstIterator
-  {
-    return {storage_, 0};
-  }
+  [[nodiscard]] constexpr func cbegin() const noexcept -> ConstIterator { return {storage_, 0}; }
 
   /**
    * @public
@@ -1353,8 +1304,7 @@ class DynamicBitset
    * }
    * @endcode
    */
-  [[nodiscard]] constexpr func cend() const noexcept -> ConstIterator
-  {
+  [[nodiscard]] constexpr func cend() const noexcept -> ConstIterator {
     return {storage_, static_cast<DifferenceType>(bits_)};
   }
 
@@ -1391,11 +1341,7 @@ class DynamicBitset
    * bits.Resize(1'000, true); // Uses allocator copy of CustomAllocatorType instance
    * @endcode
    */
-  explicit constexpr DynamicBitset(
-    const AllocatorType& allocator
-  ) noexcept
-    : alloc_{allocator}
-  { }
+  explicit constexpr DynamicBitset(const AllocatorType& allocator) noexcept : alloc_{allocator} { }
 
   /**
    * @public
@@ -1418,15 +1364,9 @@ class DynamicBitset
    *                                                         // Explicitly passed `std::allocator<size_t>` instance
    * @endcode
    */
-  constexpr DynamicBitset(
-    SizeType bits,  //
-    BlockType value = 0,
-    const AllocatorType& allocator = AllocatorType{}
-  )
-    : alloc_{allocator}
-  {
-    if (!bits)
-    {
+  constexpr DynamicBitset(SizeType bits, BlockType value = 0, const AllocatorType& allocator = AllocatorType{})
+    : alloc_{allocator} {
+    if (!bits) {
       return;
     }
 
@@ -1454,13 +1394,9 @@ class DynamicBitset
    * bits::DynamicBitset b{a}; // a == b Two identical `DynamicBitset` instances
    * @endcode
    */
-  constexpr DynamicBitset(
-    const DynamicBitset& other
-  )
-    : alloc_{AllocatorTraits::select_on_container_copy_construction(other.alloc_)}
-  {
-    if (!other.blocks_)
-    {
+  constexpr DynamicBitset(const DynamicBitset& other)
+    : alloc_{AllocatorTraits::select_on_container_copy_construction(other.alloc_)} {
+    if (!other.blocks_) {
       return;
     }
     storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
@@ -1488,14 +1424,8 @@ class DynamicBitset
    *                                              // different allocator instances
    * @endcode
    */
-  constexpr DynamicBitset(
-    const DynamicBitset& other,  //
-    const AllocatorType& allocator
-  )
-    : alloc_{allocator}
-  {
-    if (!other.blocks_)
-    {
+  constexpr DynamicBitset(const DynamicBitset& other, const AllocatorType& allocator) : alloc_{allocator} {
+    if (!other.blocks_) {
       return;
     }
     storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
@@ -1523,17 +1453,11 @@ class DynamicBitset
    * bits::DynamicBitset b{std::move(a)}; // a.Data() == nullptr, a.Size() == 0, a.Capacity() == 0
    * @endcode
    */
-  constexpr DynamicBitset(
-    DynamicBitset&& other
-  ) noexcept
-    : storage_{other.storage_}  //
-    , bits_{other.bits_}
-    , blocks_{other.blocks_}
-    , alloc_{std::move(other.alloc_)}
-  {
-    other.storage_ = nullptr;
-    other.bits_ = other.blocks_ = 0;
-  }
+  constexpr DynamicBitset(DynamicBitset&& other) noexcept
+    : storage_{std::exchange(other.storage_, nullptr)}  //
+    , bits_{std::exchange(other.bits_, 0)}
+    , blocks_{std::exchange(other.blocks_, 0)}
+    , alloc_{std::move(other.alloc_)} { }
 
   /**
    * @public
@@ -1553,22 +1477,15 @@ class DynamicBitset
    *                                                         // unchanged otherwise
    * @endcode
    */
-  constexpr DynamicBitset(
-    DynamicBitset&& other, //
-    const AllocatorType& allocator
-  ) noexcept(AllocatorTraits::is_always_equal::value)
+  constexpr DynamicBitset(DynamicBitset&& other, const AllocatorType& allocator) noexcept
     : storage_{AllocatorTraits::is_always_equal::value || allocator == other.alloc_ ? other.storage_ : nullptr}
     , bits_{AllocatorTraits::is_always_equal::value || allocator == other.alloc_ ? other.bits_ : 0}
     , blocks_{AllocatorTraits::is_always_equal::value || allocator == other.alloc_ ? other.blocks_ : 0}
-    , alloc_{allocator}
-  {
-    if (AllocatorTraits::is_always_equal::value || alloc_ == other.alloc_)
-    {
+    , alloc_{allocator} {
+    if (AllocatorTraits::is_always_equal::value || alloc_ == other.alloc_) {
       other.storage_ = nullptr;
       other.bits_ = other.blocks_ = 0;
-    }
-    else
-    {
+    } else {
       storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
       bits_ = other.bits_;
       blocks_ = other.blocks_;
@@ -1588,51 +1505,37 @@ class DynamicBitset
    * @throws std::bad_alloc If memory allocation fails (std::allocator).
    */
   template<__bits_details::IsValidDynamicBitsetBlockIterator<BlockType> BlockIterator>
-  constexpr DynamicBitset(
-    BlockIterator first,  //
-    BlockIterator last
-  )
-  {
-    if (first == last)
-    {
+  constexpr DynamicBitset(BlockIterator first, BlockIterator last) {
+    if (first == last) {
       return;
     }
 
     SizeType size;
-    if constexpr (std::is_same_v<std::remove_cv_t<BlockIterator>, Iterator>)
-    {
+    if constexpr (std::is_same_v<std::remove_cv_t<BlockIterator>, Iterator>) {
       size = static_cast<SizeType>(last - first);
-    }
-    else
-    {
+    } else {
       size = static_cast<SizeType>(std::distance(first, last)) << BlockInfo::kByteDivConst;
     }
 
-    try
-    {
-      blocks_ = CalculateCapacity(size);
-      bits_ = size;
+    blocks_ = CalculateCapacity(size);
+    bits_ = size;
+
+    try {
       storage_ = AllocatorTraits::allocate(alloc_, blocks_);
-    }
-    catch (const std::exception& /* error */)
-    {
+    } catch (const std::exception& /* error */) {
       blocks_ = bits_ = 0;
       throw;
     }
 
     Pointer end{storage_ + blocks_};
-    for (Pointer begin{storage_}; begin != end; ++begin)
-    {
+    for (Pointer begin{storage_}; begin != end; ++begin) {
       *begin = static_cast<BlockType>(*first);
-      if constexpr (std::is_same_v<std::remove_cv_t<BlockIterator>, Iterator>)
-      {
+      if constexpr (std::is_same_v<std::remove_cv_t<BlockIterator>, Iterator>) {
         std::advance(
           first,
           std::min<typename std::iterator_traits<BlockIterator>::difference_type>(last - first, BlockInfo::kBitsCount)
         );
-      }
-      else
-      {
+      } else {
         ++first;
       }
     }
@@ -1646,15 +1549,7 @@ class DynamicBitset
    *
    * @throws None (no-throw guarantee).
    */
-  constexpr ~DynamicBitset()
-  {
-    if (storage_)
-    {
-      AllocatorTraits::deallocate(alloc_, storage_, blocks_);
-      storage_ = nullptr;
-      bits_ = blocks_ = 0;
-    }
-  }
+  constexpr ~DynamicBitset() { Clear(); }
 
   /**
    * @public
@@ -1672,10 +1567,7 @@ class DynamicBitset
    * bits.PushBack(true); // Capacity() == sizeof(BlockType) * 100 * 8, Size() == 1
    * @endcode
    */
-  [[nodiscard]] constexpr func Capacity() const noexcept -> SizeType
-  {
-    return blocks_ << BlockInfo::kByteDivConst;
-  }
+  [[nodiscard]] constexpr func Capacity() const noexcept -> SizeType { return blocks_ << BlockInfo::kByteDivConst; }
 
   /**
    * @public
@@ -1694,10 +1586,7 @@ class DynamicBitset
    * blocks_number = bits.NumBlocks();                                  // blocks_number == 1
    * @endcode
    */
-  [[nodiscard]] constexpr func NumBlocks() const noexcept -> SizeType
-  {
-    return blocks_;
-  }
+  [[nodiscard]] constexpr func NumBlocks() const noexcept -> SizeType { return blocks_; }
 
   /**
    * @public
@@ -1707,7 +1596,7 @@ class DynamicBitset
    *          - The object representation (no memory constraints considered).
    * @ingroup dynamic-bitset-Capacity
    *
-   * @return A constant `SizeType` value equal to `numeric_limits<SizeType>::max()`.
+   * @return A constant `SizeType` value equal to the `std::allocator_traits<Allocator>::max_size(allocator)`.
    *
    * @throws None (no-throw guarantee).
    *
@@ -1719,10 +1608,7 @@ class DynamicBitset
    *
    * @note Identical to `std::vector::max_size()` in behaviour.
    */
-  [[nodiscard]] constexpr func MaxSize() const noexcept -> SizeType
-  {
-    return std::numeric_limits<SizeType>::max();
-  }
+  [[nodiscard]] constexpr func MaxSize() const noexcept -> SizeType { return AllocatorTraits::max_size(alloc_); }
 
   /**
    * @public
@@ -1739,10 +1625,7 @@ class DynamicBitset
    * @note Direct comparison with memcmp on pointers may result to non equality
    *       due to internal optimizations.
    */
-  [[nodiscard]] constexpr func Data() noexcept -> Pointer
-  {
-    return storage_;
-  }
+  [[nodiscard]] constexpr func Data() noexcept -> Pointer { return storage_; }
 
   /**
    * @public
@@ -1759,10 +1642,7 @@ class DynamicBitset
    * @note Direct comparison with memcmp on pointers may result to non equality
    *       due to internal optimizations.
    */
-  [[nodiscard]] constexpr func Data() const noexcept -> ConstPointer
-  {
-    return storage_;
-  }
+  [[nodiscard]] constexpr func Data() const noexcept -> ConstPointer { return storage_; }
 
   /**
    * @public
@@ -1773,10 +1653,7 @@ class DynamicBitset
    *
    * @throws None (no-throw guarantee).
    */
-  [[nodiscard]] constexpr func GetAllocator() const noexcept -> AllocatorType
-  {
-    return alloc_;
-  }
+  [[nodiscard]] constexpr func GetAllocator() const noexcept -> AllocatorType { return alloc_; }
 
   /**
    * @public
@@ -1794,31 +1671,25 @@ class DynamicBitset
    * auto set_bits{bits.Count()}; // set_bits == 8
    * @endcode
    */
-  [[nodiscard]] constexpr func Count() const noexcept -> SizeType
-  {
-    if (!bits_)
-    {
+  [[nodiscard]] constexpr func Count() const noexcept -> SizeType {
+    if (!bits_) {
       return 0;
     }
 
     Pointer end{storage_ + CalculateCapacity(bits_) - 1};
     SizeType bit_count{};
 
-    for (Pointer begin{storage_}; begin < end; ++begin)
-    {
+    for (Pointer begin{storage_}; begin < end; ++begin) {
       bit_count += std::popcount(*begin);
     }
 
     SizeType remaining_bits{bits_ & BlockInfo::kByteModConst};
-    if (!remaining_bits)
-    {
+    if (!remaining_bits) {
       remaining_bits = BlockInfo::kBitsCount;
     }
 
-    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit)
-    {
-      if (*end & BitMask::kBit << current_bit)
-      {
+    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit) {
+      if (*end & BitMask::kBit << current_bit) {
         ++bit_count;
       }
     }
@@ -1850,18 +1721,15 @@ class DynamicBitset
    * bits.ShrinkToFit();  // Size() == 1, Capacity() == sizeof(BlockType) * 8
    * @endcode
    */
-  constexpr func ShrinkToFit() -> void
-  {
-    if (!bits_)
-    {
+  constexpr func ShrinkToFit() -> void {
+    if (!bits_) {
       Clear();
       return;
     }
 
     const SizeType current_bytes{CalculateCapacity(bits_)};
 
-    if (current_bytes < blocks_)
-    {
+    if (current_bytes < blocks_) {
       Pointer temp_ptr{AllocatorTraits::allocate(alloc_, current_bytes)};
       std::copy(storage_, storage_ + blocks_, temp_ptr);
       AllocatorTraits::deallocate(alloc_, storage_, blocks_);
@@ -1890,33 +1758,26 @@ class DynamicBitset
    * is_any_set = bits.Any();     // Returns `true` because the last bit is set
    * @endcode
    */
-  [[nodiscard]] constexpr func Any() const noexcept -> bool
-  {
-    if (!bits_)
-    {
+  [[nodiscard]] constexpr func Any() const noexcept -> bool {
+    if (!bits_) {
       return false;
     }
 
     Pointer end{storage_ + CalculateCapacity(bits_) - 1};
 
-    for (Pointer begin{storage_}; begin < end; ++begin)
-    {
-      if (*begin)
-      {
+    for (Pointer begin{storage_}; begin < end; ++begin) {
+      if (*begin) {
         return true;
       }
     }
 
     SizeType remaining_bits{bits_ & BlockInfo::kByteModConst};
-    if (!remaining_bits)
-    {
+    if (!remaining_bits) {
       remaining_bits = BlockInfo::kBitsCount;
     }
 
-    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit)
-    {
-      if (*end & BitMask::kBit << current_bit)
-      {
+    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit) {
+      if (*end & BitMask::kBit << current_bit) {
         return true;
       }
     }
@@ -1946,10 +1807,7 @@ class DynamicBitset
    * is_none_set = bits.None();     // Returns `false` because the last bit is set
    * @endcode
    */
-  [[nodiscard]] constexpr func None() const noexcept -> bool
-  {
-    return !Any();
-  }
+  [[nodiscard]] constexpr func None() const noexcept -> bool { return !Any(); }
 
   /**
    * @public
@@ -1973,33 +1831,26 @@ class DynamicBitset
    * is_all_set = bits.All();     // Returns `false` because the last bit is unset
    * @endcode
    */
-  [[nodiscard]] constexpr func All() const noexcept -> bool
-  {
-    if (!bits_)
-    {
+  [[nodiscard]] constexpr func All() const noexcept -> bool {
+    if (!bits_) {
       return false;
     }
 
     Pointer end{storage_ + CalculateCapacity(bits_) - 1};
 
-    for (Pointer begin{storage_}; begin < end; ++begin)
-    {
-      if (!*begin)
-      {
+    for (Pointer begin{storage_}; begin < end; ++begin) {
+      if (!*begin) {
         return false;
       }
     }
 
     SizeType remaining_bits{bits_ & BlockInfo::kByteModConst};
-    if (!remaining_bits)
-    {
+    if (!remaining_bits) {
       remaining_bits = BlockInfo::kBitsCount;
     }
 
-    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit)
-    {
-      if (!(*end & BitMask::kBit << current_bit))
-      {
+    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit) {
+      if (!(*end & BitMask::kBit << current_bit)) {
         return false;
       }
     }
@@ -2027,10 +1878,7 @@ class DynamicBitset
    * is_bits_empty = bits.Empty();     // is_bits_sempty == false
    * @endcode
    */
-  [[nodiscard]] constexpr func Empty() const noexcept -> bool
-  {
-    return !bits_;
-  }
+  [[nodiscard]] constexpr func Empty() const noexcept -> bool { return !bits_; }
 
   /**
    * @public
@@ -2049,10 +1897,8 @@ class DynamicBitset
    * bits.Clear();                  // Data() == nullptr, Size() == 0, Capacity() == 0
    * @endcode
    */
-  constexpr func Clear() noexcept -> void
-  {
-    if (!storage_)
-    {
+  constexpr func Clear() noexcept -> void {
+    if (!storage_) {
       return;
     }
     AllocatorTraits::deallocate(alloc_, storage_, blocks_);
@@ -2080,44 +1926,34 @@ class DynamicBitset
    * bits.Resize(0);              // Size() = 0, Sequence: []
    * @endcode
    */
-  constexpr func Resize(
-    SizeType bits,  //
-    bool value = false
-  ) -> void
-  {
-    if (!bits)
-    {
+  constexpr func Resize(SizeType bits, bool value = false) -> void {
+    if (!bits) {
       Clear();
       return;
-    }
-    else if (bits == bits_)
-    {
+    } else if (bits == bits_) {
       return;
     }
 
     const SizeType new_size{CalculateCapacity(bits)};
 
-    if (blocks_ < new_size)
-    {
+    if (blocks_ < new_size) {
       Pointer temp_ptr{AllocatorTraits::allocate(alloc_, new_size)};
 
-      if (storage_)
-      {
+      if (storage_) {
         std::copy(storage_, storage_ + blocks_, temp_ptr);
         AllocatorTraits::deallocate(alloc_, storage_, blocks_);
       }
 
       storage_ = temp_ptr;
 
-      FillData(storage_ + blocks_, new_size - blocks_, value ? BitMask::kSet : BitMask::kReset);
+      std::fill_n(storage_ + blocks_, new_size - blocks_, value ? BitMask::kSet : BitMask::kReset);
       blocks_ = new_size;
       bits_ = bits;
 
       return;
     }
 
-    while (bits_ < bits)
-    {
+    while (bits_ < bits) {
       SetBit(bits_++, value);
     }
   }
@@ -2140,20 +1976,15 @@ class DynamicBitset
    * bits.Reserve(10);         // Size() == 0, Capacity() == sizeof(BlockType) * 10 * 8
    * @endcode
    */
-  constexpr func Reserve(
-    SizeType blocks
-  ) -> void
-  {
-    if (!blocks)
-    {
+  constexpr func Reserve(SizeType blocks) -> void {
+    if (!blocks) {
       return;
     }
 
     const SizeType new_size{blocks_ + blocks};
     Pointer temp_ptr{AllocatorTraits::allocate(alloc_, new_size)};
 
-    if (storage_)
-    {
+    if (storage_) {
       std::copy(storage_, storage_ + blocks_, temp_ptr);
       AllocatorTraits::deallocate(alloc_, storage_, blocks_);
     }
@@ -2181,12 +2012,8 @@ class DynamicBitset
    * bits.PushBack(false); // Sequence: [1, 0]
    * @endcode
    */
-  constexpr func PushBack(
-    bool value
-  ) -> void
-  {
-    if (ResizeFactor())
-    {
+  constexpr func PushBack(bool value) -> void {
+    if (ResizeFactor()) {
       GrowInit();
     }
 
@@ -2212,10 +2039,7 @@ class DynamicBitset
    * @see Capacity()
    * @see Empty()
    */
-  [[nodiscard]] constexpr func Size() const noexcept -> SizeType
-  {
-    return bits_;
-  }
+  [[nodiscard]] constexpr func Size() const noexcept -> SizeType { return bits_; }
 
   /**
    * @public
@@ -2234,8 +2058,7 @@ class DynamicBitset
    * bits.PopBack();                    // Size() == 7, Sequence: [1, 1, 1, 1, 1, 1, 1]
    * @endcode
    */
-  constexpr func PopBack() noexcept -> void
-  {
+  constexpr func PopBack() noexcept -> void {
     BITS_DYNAMIC_BITSET_ASSERT(storage_ != nullptr && bits_ > 0);
 
     --bits_;
@@ -2261,13 +2084,8 @@ class DynamicBitset
    * bits.Set(100);               // Throws std::out_of_range exception
    * @endcode
    */
-  constexpr func Set(
-    SizeType index,  //
-    bool value = false
-  ) -> DynamicBitset&
-  {
-    if (index >= bits_)
-    {
+  constexpr func Set(SizeType index, bool value = false) -> DynamicBitset& {
+    if (index >= bits_) {
       throw std::out_of_range{
         std::format("DynamicBitset::Set(SizeType, bool = false): index {} >= Size ({})", index, bits_)
       };
@@ -2295,14 +2113,12 @@ class DynamicBitset
    * bits.Set();                  // Throws std::out_of_range exception
    * @endcode
    */
-  constexpr func Set() -> DynamicBitset&
-  {
-    if (!bits_)
-    {
+  constexpr func Set() -> DynamicBitset& {
+    if (!bits_) {
       throw std::out_of_range{"DynamicBitset::Set() -> invalid number of bits"};
     }
 
-    FillData(storage_, CalculateCapacity(bits_), BitMask::kSet);
+    std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kSet);
     return *this;
   }
 
@@ -2324,12 +2140,8 @@ class DynamicBitset
    * bits.Reset(100);                   // Throws std::out_of_range exception
    * @endcode
    */
-  constexpr func Reset(
-    SizeType index
-  ) -> DynamicBitset&
-  {
-    if (index >= bits_)
-    {
+  constexpr func Reset(SizeType index) -> DynamicBitset& {
+    if (index >= bits_) {
       throw std::out_of_range{std::format("DynamicBitset::Reset(SizeType): index {} >= Size ({})", index, bits_)};
     }
 
@@ -2355,14 +2167,12 @@ class DynamicBitset
    * bits.Reset();                      // Throws std::out_of_range exception
    * @endcode
    */
-  constexpr func Reset() -> DynamicBitset&
-  {
-    if (!bits_)
-    {
+  constexpr func Reset() -> DynamicBitset& {
+    if (!bits_) {
       throw std::out_of_range{"DynamicBitset::Reset() -> invalid number of bits"};
     }
 
-    FillData(storage_, CalculateCapacity(bits_), BitMask::kReset);
+    std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kReset);
     return *this;
   }
 
@@ -2387,12 +2197,8 @@ class DynamicBitset
    * bits.Flip(100);                    // Throws std::out_of_range exception
    * @endcode
    */
-  constexpr func Flip(
-    SizeType index
-  ) -> DynamicBitset&
-  {
-    if (index >= bits_)
-    {
+  constexpr func Flip(SizeType index) -> DynamicBitset& {
+    if (index >= bits_) {
       throw std::out_of_range{std::format("DynamicBitset::Flip(SizeType): index {} >= Size ({})", index, bits_)};
     }
 
@@ -2417,19 +2223,14 @@ class DynamicBitset
    * bits.Flip();                     // Throws std::out_of_range exception
    * @endcode
    */
-  constexpr func Flip() -> DynamicBitset&
-  {
-    if (!bits_)
-    {
+  constexpr func Flip() -> DynamicBitset& {
+    if (!bits_) {
       throw std::out_of_range{"DynamicBitset::Flip() -> invalid number of bits"};
     }
 
-    Pointer end{storage_ + CalculateCapacity(bits_)};
-
-    [[likely]] for (Pointer begin{storage_}; begin < end; ++begin)
-    {
-      *begin ^= BitMask::kSet;
-    }
+    std::for_each(storage_, storage_ + CalculateCapacity(bits_), [](BlockType& block) constexpr noexcept -> void {
+      block ^= BitMask::kSet;
+    });
 
     return *this;
   }
@@ -2452,22 +2253,17 @@ class DynamicBitset
    *                                      // anotherBits: Size() == 4, Sequence: [1, 1, 1, 1]
    * @endcode
    */
-  constexpr func Swap(
-    DynamicBitset& other
-  ) noexcept -> void
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(this != &other);
+  constexpr func Swap(DynamicBitset& other) noexcept -> void {
+    if (this == &other) {
+      return;
+    }
 
     std::swap(storage_, other.storage_);
     std::swap(bits_, other.bits_);
     std::swap(blocks_, other.blocks_);
-    if constexpr (AllocatorTraits::propagate_on_container_swap::value)
-    {
-      std::swap(alloc_, other.alloc_);
-    }
-    else
-    {
-      BITS_DYNAMIC_BITSET_ASSERT(alloc_ == other.alloc_);
+    if constexpr (AllocatorTraits::propagate_on_container_swap::value) {
+      using std::swap;
+      swap(alloc_, other.alloc_);
     }
   }
 
@@ -2477,11 +2273,11 @@ class DynamicBitset
    * @details This operator provides the ability to modify or read
    *          bit with given index. Gives fast access with no
    *          range checking.
-   * @see BitWrapper
+   * @see BitReference
    * @ingroup dynamic-bitset-access
    *
    * @param[in] index The zero-base index of the bit to access.
-   * @return `BitWrapper` object to obtain the specified bit.
+   * @return `BitReference` object to obtain the specified bit.
    *
    * @throws None (no-throw guarantee).
    *
@@ -2496,10 +2292,7 @@ class DynamicBitset
    * bits[10] = true;             // Undefined behaviour
    * @endcode
    */
-  [[nodiscard]] constexpr func operator[](
-    SizeType index
-  ) noexcept -> typename Iterator::BitWrapper
-  {
+  [[nodiscard]] constexpr func operator[](SizeType index) noexcept -> BitReference {
     BITS_DYNAMIC_BITSET_ASSERT(bits_ != 0);
 
     return {storage_, static_cast<DifferenceType>(index)};
@@ -2528,13 +2321,10 @@ class DynamicBitset
    * bool another_bit_value{bits[10]};  // Undefined behaviour
    * @endcode
    */
-  [[nodiscard]] constexpr func operator[](
-    SizeType index
-  ) const noexcept -> bool
-  {
+  [[nodiscard]] constexpr func operator[](SizeType index) const noexcept -> bool {
     BITS_DYNAMIC_BITSET_ASSERT(bits_ != 0);
 
-    return storage_[index >> BlockInfo::kByteDivConst] & BitMask::kBit << (index & BlockInfo::kByteModConst);
+    return BitReference{storage_, index};
   }
 
   /**
@@ -2545,8 +2335,8 @@ class DynamicBitset
    *          access to the bit with no range checking.
    * @ingroup dynamic-bitset-access
    *
-   * @return `BitWrapper` object to obtain first bit.
-   * @see BitWrapper
+   * @return `BitReference` object to obtain first bit.
+   * @see BitReference
    *
    * @throws None (no-throw guarantee).
    *
@@ -2562,9 +2352,8 @@ class DynamicBitset
    * bits.Front() = false;        // Undefined behaviour
    * @endcode
    */
-  [[nodiscard]] constexpr func Front() noexcept -> typename Iterator::BitWrapper
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(storage_ != nullptr);
+  [[nodiscard]] constexpr func Front() noexcept -> BitReference {
+    BITS_DYNAMIC_BITSET_ASSERT(storage_);
 
     return {storage_, 0};
   }
@@ -2593,9 +2382,8 @@ class DynamicBitset
    * bool another_bit_value{another_bits.Front()}; // Undefined behaviour
    * @endcode
    */
-  [[nodiscard]] constexpr func Front() const noexcept -> bool
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(bits_ != 0);
+  [[nodiscard]] constexpr func Front() const noexcept -> bool {
+    BITS_DYNAMIC_BITSET_ASSERT(bits_);
 
     return *storage_ & BitMask::kBit;
   }
@@ -2606,10 +2394,10 @@ class DynamicBitset
    * @details This method provides read and write access to
    *          the last bit in sequence. Gives fast access to
    *          the bit with no range checking.
-   * @see BitWrapper
+   * @see BitReference
    * @ingroup dynamic-bitset-access
    *
-   * @return `BitWrapper` object to obtain last bit.
+   * @return `BitReference` object to obtain last bit.
    *
    * @throws None (no-throw guarantee).
    *
@@ -2628,9 +2416,8 @@ class DynamicBitset
    * bits.Back() = false;         // Undefined behaviour
    * @endcode
    */
-  [[nodiscard]] constexpr func Back() noexcept -> typename Iterator::BitWrapper
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(bits_ != 0);
+  [[nodiscard]] constexpr func Back() noexcept -> BitReference {
+    BITS_DYNAMIC_BITSET_ASSERT(bits_);
 
     return {storage_, static_cast<DifferenceType>(bits_ - 1)};
   }
@@ -2661,9 +2448,8 @@ class DynamicBitset
    * bool another_bit_value{another_bits.Back()}; // Undefined behaviour
    * @endcode
    */
-  [[nodiscard]] constexpr func Back() const noexcept -> bool
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(storage_ != nullptr);
+  [[nodiscard]] constexpr func Back() const noexcept -> bool {
+    BITS_DYNAMIC_BITSET_ASSERT(storage_);
 
     return storage_[(bits_ - 1) >> BlockInfo::kByteDivConst] & BitMask::kBit
                                                                  << ((bits_ - 1) & BlockInfo::kByteModConst);
@@ -2673,14 +2459,14 @@ class DynamicBitset
    * @public
    * @brief Accesses the bit at the specified index with bounds checking.
    * @details This function provides read/write access to a bit in a
-   *          sequence using `BitWrapper` class. Unlike `operator[]` and
+   *          sequence using `BitReference` class. Unlike `operator[]` and
    *          `Test()`, it performs bounds checking and throws an
    *           exception if the index is invalid.
-   * @see BitWrapper
+   * @see BitReference
    * @ingroup dynamic-bitset-access
    *
    * @param[in] index The zero-based index of the bit to access.
-   * @return `BitWrapper` object
+   * @return `BitReference` object
    *
    * @throws std::out_of_range If `index >= Size()` (out-of-bounds access).
    *
@@ -2694,12 +2480,8 @@ class DynamicBitset
    * bits.At(5) = true; // Throws std::out_of_range exception
    * @endcode
    */
-  [[nodiscard]] constexpr func At(
-    SizeType index
-  ) -> typename Iterator::BitWrapper
-  {
-    if (index >= bits_)
-    {
+  [[nodiscard]] constexpr func At(SizeType index) -> BitReference {
+    if (index >= bits_) {
       throw std::out_of_range{std::format("bits::DynamicBitset::At(SizeType): index {} >= Size ({})", index, bits_)};
     }
 
@@ -2730,14 +2512,10 @@ class DynamicBitset
    * exception
    * @endcode
    */
-  [[nodiscard]] constexpr func At(
-    SizeType index
-  ) const -> bool
-  {
+  [[nodiscard]] constexpr func At(SizeType index) const -> bool {
     BITS_DYNAMIC_BITSET_ASSERT(index < bits_);
 
-    if (index >= bits_)
-    {
+    if (index >= bits_) {
       throw std::out_of_range{
         std::format("bits::DynamicBitset::At(SizeType) const: index {} >= Size ({})", index, bits_)
       };
@@ -2772,11 +2550,8 @@ class DynamicBitset
    * bool bit_value{bits.Test(0)}; // bit_value == true
    * @endcode
    */
-  [[nodiscard]] constexpr func Test(
-    SizeType index
-  ) const noexcept -> bool
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(storage_ != nullptr);
+  [[nodiscard]] constexpr func Test(SizeType index) const noexcept -> bool {
+    BITS_DYNAMIC_BITSET_ASSERT(storage_);
 
     return storage_[index >> BlockInfo::kByteDivConst] & BitMask::kBit << (index & BlockInfo::kByteModConst);
   }
@@ -2802,32 +2577,8 @@ class DynamicBitset
    * another_bits = bits; // Size() == 8, Sequence: [1, 1, 1, 1, 1, 1, 1, 1]
    * @endcode
    */
-  constexpr func operator=(
-    const DynamicBitset& other
-  ) /* clang-format off */ -> DynamicBitset& /* clang-format on */
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(this != &other);
-
-    if (blocks_ != other.blocks_)
-    {
-      AllocatorTraits::deallocate(alloc_, storage_, blocks_);
-      if constexpr (AllocatorTraits::propagate_on_container_copy_assignment::value)
-      {
-        storage_ = AllocatorTraits::allocate(other.alloc_, other.blocks_);
-      }
-      else
-      {
-        storage_ = AllocatorTraits::allocate(alloc_, other.blocks_);
-      }
-    }
-
-    CopyData(other.storage_, storage_, CalculateCapacity(other.blocks_));
-    bits_ = other.bits_;
-    blocks_ = other.blocks_;
-    if constexpr (AllocatorTraits::propagate_on_container_copy_assignment::value)
-    {
-      alloc_ = other.alloc_;
-    }
+  constexpr func operator=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
+    DynamicBitset{other}.Swap(*this);
 
     return *this;
   }
@@ -2852,24 +2603,19 @@ class DynamicBitset
    * // b: Size() == 4, Sequence: [0, 0, 0, 0]
    * @endcode
    */
-  constexpr func operator=(
-    DynamicBitset&& other
-  ) noexcept -> DynamicBitset&
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(this != &other);
-
-    if (storage_ != nullptr)
-    {
-      AllocatorTraits::deallocate(alloc_, storage_, blocks_);
-      storage_ = nullptr;
-      bits_ = blocks_ = 0;
+  constexpr func operator=(DynamicBitset&& other) noexcept -> DynamicBitset& {
+    if (this == &other) {
+      return *this;
     }
 
-    std::swap(storage_, other.storage_);
-    std::swap(bits_, other.bits_);
-    std::swap(blocks_, other.blocks_);
-    if constexpr (AllocatorTraits::propagate_on_container_move_assignment::value)
-    {
+    if (storage_) {
+      AllocatorTraits::deallocate(alloc_, storage_, blocks_);
+    }
+
+    storage_ = std::exchange(other.storage_, nullptr);
+    bits_ = std::exchange(other.bits_, 0);
+    blocks_ = std::exchange(other.blocks_, 0);
+    if constexpr (AllocatorTraits::propagate_on_container_move_assignment::value) {
       alloc_ = std::move(other.alloc_);
     }
 
@@ -2902,22 +2648,16 @@ class DynamicBitset
    * // a: Size() == 4, Sequence: [0, 0, 0, 0]
    * @endcode
    */
-  constexpr func operator&=(
-    const DynamicBitset& other
-  ) /* clang-format off */ -> DynamicBitset& /* clang-format on */
-  {
-    if (bits_ != other.bits_ || !bits_ || !other.bits_)
-    {
+  constexpr func operator&=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
+    if (!(bits_ == other.bits_ && bits_ && other.bits_)) {
       throw std::invalid_argument{"DynamicBitset::operator&= -> invalid storage size"};
     }
 
-    Pointer begin_other{other.storage_};
-    Pointer end{storage_ + CalculateCapacity(bits_)};
-
-    [[likely]] for (Pointer begin_self{storage_}; begin_self < end; ++begin_self)
-    {
-      *begin_self &= *begin_other++;
-    }
+    std::for_each(
+      storage_,
+      storage_ + CalculateCapacity(bits_),
+      [other_block = other.storage_](auto& block) constexpr mutable noexcept -> void { block &= *other_block++; }
+    );
 
     return *this;
   }
@@ -2948,23 +2688,16 @@ class DynamicBitset
    * // a: Size() == 4, Sequence: [1, 1, 1, 1]
    * @endcode
    */
-  constexpr func operator|=(
-    const DynamicBitset& other
-  ) /* clang-format off */ -> DynamicBitset& /* clang-format on */
-  {
-    if (bits_ != other.bits_ || !bits_ || !other.bits_)
-    {
+  constexpr func operator|=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
+    if (!(bits_ == other.bits_ && bits_ && other.bits_)) {
       throw std::invalid_argument{"DynamicBitset::operator|= -> invalid storage size"};
     }
 
-    Pointer begin_self{storage_};
-    Pointer begin_other{other.storage_};
-    Pointer end{storage_ + CalculateCapacity(bits_)};
-
-    [[likely]] while (begin_self < end)
-    {
-      *begin_self++ |= *begin_other++;
-    }
+    std::for_each(
+      storage_,
+      storage_ + CalculateCapacity(bits_),
+      [other_block = other.storage_](auto& block) constexpr mutable noexcept -> void { block |= *other_block++; }
+    );
 
     return *this;
   }
@@ -2995,23 +2728,16 @@ class DynamicBitset
    * // a: Size() == 4, Sequence: [1, 1, 1, 1]
    * @endcode
    */
-  constexpr func operator^=(
-    const DynamicBitset& other
-  ) /* clang-format off */ -> DynamicBitset& /* clang-format on */
-  {
-    if (bits_ != other.bits_ || !bits_ || !other.bits_)
-    {
+  constexpr func operator^=(const DynamicBitset& other) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
+    if (!(bits_ == other.bits_ && bits_ && other.bits_)) {
       throw std::invalid_argument{"DynamicBitset::operator^= -> invalid storage size"};
     }
 
-    Pointer begin_self{storage_};
-    Pointer begin_other{other.storage_};
-    Pointer end{storage_ + blocks_};
-
-    [[likely]] while (begin_self < end)
-    {
-      *begin_self++ ^= *begin_other++;
-    }
+    std::for_each(
+      storage_,
+      storage_ + CalculateCapacity(bits_),
+      [other_block = other.storage_](auto& block) constexpr mutable noexcept -> void { block ^= *other_block++; }
+    );
 
     return *this;
   }
@@ -3036,21 +2762,17 @@ class DynamicBitset
    * auto b{~a}; // Size() == 4, Sequence: [1, 1, 1, 1]
    * @endcode
    */
-  [[nodiscard]] constexpr func operator~() const
-    /* clang-format off */ -> DynamicBitset /* clang-format on */
-  {
-    if (!storage_)
-    {
+  [[nodiscard]] constexpr func operator~() const /* clang-format off */ -> DynamicBitset /* clang-format on */ {
+    if (!storage_) {
       throw std::out_of_range{"DynamicBitset::operator~ -> invalid storage pointer (nullptr)"};
     }
 
     auto bits{*this};
-    Pointer end{bits.storage_ + CalculateCapacity(bits_)};
-
-    [[likely]] for (Pointer begin{bits.storage_}; begin < end; ++begin)
-    {
-      *begin ^= BitMask::kSet;
-    }
+    std::for_each(
+      bits.storage_, bits.storage_ + CalculateCapacity(bits.bits_), [](BlockType& block) constexpr noexcept -> void {
+        block ^= BitMask::kSet;
+      }
+    );
 
     return bits;
   }
@@ -3077,35 +2799,25 @@ class DynamicBitset
    * bits >>= 8; // Sequence: [0, 0, 0, 0, 0, 0, 0, 0]
    * @endcode
    */
-  constexpr func operator>>=(
-    SizeType bit_offset
-  ) /* clang-format off */ -> DynamicBitset& /* clang-format on */
-  {
-    if (!bits_)
-    {
+  constexpr func operator>>=(SizeType bit_offset) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
+    if (!bits_) {
       throw std::out_of_range{"DynamicBitset::operator>>= -> invalid storage pointer (nullptr)"};
-    }
-    else if (bit_offset >= bits_)
-    {
-      FillData(storage_, CalculateCapacity(bits_), BitMask::kReset);
-    }
-    else if (bit_offset)
-    {
-      SizeType total_shifts{bit_offset - 1};
+    } else if (bit_offset >= bits_) {
+      std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kReset);
+    } else if (bit_offset) {
+      const SizeType total_shifts{bit_offset - 1};
 
-      for (SizeType bit{bits_ - 1}; bit > total_shifts; --bit)
-      {
-        SizeType bit_shift{bit - bit_offset};
-        SizeType byte{
+      for (SizeType bit{bits_ - 1}; bit > total_shifts; --bit) {
+        const SizeType bit_shift{bit - bit_offset};
+        const SizeType bit_state{
           storage_[bit_shift >> BlockInfo::kByteDivConst] & BitMask::kBit << (bit_shift & BlockInfo::kByteModConst)
         };
-        SetBit(bit, byte);
+        SetBit(bit, bit_state);
       }
 
-      FillData(storage_, bit_offset >> BlockInfo::kByteDivConst, BitMask::kReset);
+      std::fill(storage_, storage_ + (bit_offset >> BlockInfo::kByteDivConst), BitMask::kReset);
 
-      for (SizeType bit{bit_offset - (bit_offset & BlockInfo::kByteModConst)}; bit != bit_offset; ++bit)
-      {
+      for (BlockType bit{bit_offset - (bit_offset & BlockInfo::kByteModConst)}; bit != bit_offset; ++bit) {
         SetBit(bit, false);
       }
     }
@@ -3136,34 +2848,27 @@ class DynamicBitset
    * bits <<= 8; // Sequence: [0, 0, 0, 0, 0, 0, 0, 0]
    * @endcode
    */
-  constexpr func operator<<=(
-    SizeType bit_offset
-  ) /* clang-format off */ -> DynamicBitset& /* clang-format on */
-  {
-    if (!bits_)
-    {
+  constexpr func operator<<=(SizeType bit_offset) /* clang-format off */ -> DynamicBitset& /* clang-format on */ {
+    if (!bits_) {
       throw std::out_of_range{"DynamicBitset::operator<<= -> invalid storage pointer (nullptr)"};
-    }
-    else if (bit_offset >= bits_)
-    {
-      FillData(storage_, CalculateCapacity(bits_), BitMask::kReset);
-    }
-    else if (bit_offset)
-    {
-      SizeType total_shifts{bits_ - bit_offset};
-      for (SizeType bit{}; bit < total_shifts; ++bit)
-      {
-        SizeType bit_shift{bit + bit_offset};
-        SizeType state{
+    } else if (bit_offset >= bits_) {
+      std::fill(storage_, storage_ + CalculateCapacity(bits_), BitMask::kReset);
+    } else if (bit_offset) {
+      const SizeType total_shifts{bits_ - bit_offset};
+
+      for (SizeType bit{}; bit < total_shifts; ++bit) {
+        const SizeType bit_shift{bit + bit_offset};
+        const SizeType bit_state{
           storage_[bit_shift >> BlockInfo::kByteDivConst] & BitMask::kBit << (bit_shift & BlockInfo::kByteModConst)
         };
-        SetBit(bit, state);
+        SetBit(bit, bit_state);
       }
-      SizeType byte_shift{bit_offset >> BlockInfo::kByteDivConst};
-      FillData(storage_ + (CalculateCapacity(bits_) - byte_shift), byte_shift, BitMask::kReset);
-      SizeType bit_shift{bits_ - (byte_shift << 3UL)};
-      for (SizeType bit{bits_ - bit_offset}; bit != bit_shift; ++bit)
-      {
+
+      const SizeType byte_shift{bit_offset >> BlockInfo::kByteDivConst};
+      const SizeType bound{CalculateCapacity(bits_)};
+      std::fill(storage_ + (bound - byte_shift), storage_ + bound, BitMask::kReset);
+      SizeType bit_shift{bits_ - (byte_shift << 3)};
+      for (SizeType bit{bits_ - bit_offset}; bit != bit_shift; ++bit) {
         SetBit(bit, false);
       }
     }
@@ -3191,36 +2896,26 @@ class DynamicBitset
    * assert(bits == anotherBits);
    * @endcode
    */
-  [[nodiscard]] constexpr func operator==(
-    const DynamicBitset& other
-  ) const noexcept -> bool
-  {
-    BITS_DYNAMIC_BITSET_ASSERT(this != &other);
-
-    if (bits_ != other.bits_)
-    {
-      return false;
-    }
-    else if (bits_ == 0)
-    {
+  [[nodiscard]] constexpr func operator==(const DynamicBitset& other) const noexcept -> bool {
+    if (this == &other) {
       return true;
     }
 
-    Pointer first_self{storage_};
-    Pointer first_other{other.storage_};
-    Pointer end{storage_ + CalculateCapacity(bits_) - 1};
-    [[likely]] while (first_self < end)
-    {
-      if (*first_self++ != *first_other++)
-      {
-        return false;
-      }
+    if (bits_ != other.bits_) {
+      return false;
+    } else if (bits_ == 0) {
+      return true;
     }
+
+    if (!std::equal(storage_, storage_ + CalculateCapacity(bits_) - 1, other.storage_)) {
+      return false;
+    }
+
+    const Pointer last_block{storage_ + CalculateCapacity(bits_) - 1};
+    const Pointer other_last_block{other.storage_ + CalculateCapacity(other.bits_) - 1};
     const BlockType remaining_bits{static_cast<BlockType>(bits_ & BlockInfo::kByteModConst)};
-    for (BlockType current_bit{1}; current_bit <= remaining_bits; current_bit <<= 1)
-    {
-      if (!((*first_self & current_bit) & *first_other))
-      {
+    for (BlockType current_bit{1}; current_bit <= remaining_bits; current_bit <<= 1) {
+      if (!((*last_block & current_bit) & *other_last_block)) {
         return false;
       }
     }
@@ -3244,10 +2939,7 @@ class DynamicBitset
    * assert(a != b);
    * @endcode
    */
-  [[nodiscard]] constexpr func operator!=(
-    const DynamicBitset& other
-  ) const noexcept -> bool
-  {
+  [[nodiscard]] constexpr func operator!=(const DynamicBitset& other) const noexcept -> bool {
     return !(*this == other);
   }
 
@@ -3275,13 +2967,18 @@ class DynamicBitset
    * auto s{bits.ToString()}; // '1010'
    * @endcode
    */
-  [[nodiscard]] constexpr func ToString() const -> std::string
-  {
+  [[nodiscard]] constexpr func ToString() const -> std::string {
     std::string str_bits(bits_, '\0');
-
-    for (SizeType current_bit{}; current_bit < bits_; ++current_bit)
-    {
-      str_bits[current_bit] =
+    const unsigned char* last_byte_block{reinterpret_cast<unsigned char*>(storage_ + CalculateCapacity(bits_))};
+    auto str_byte_block{str_bits.begin()};
+    for (unsigned char* byte_block{reinterpret_cast<unsigned char*>(storage_)}; byte_block != last_byte_block;
+         ++byte_block) {
+      std::ranges::copy(__bits_details::kStrBytesMapping[*byte_block], str_byte_block);
+      str_byte_block += std::numeric_limits<unsigned char>::digits;
+    }
+    const SizeType remaining_bits{bits_ & (std::numeric_limits<unsigned char>::digits - 1)};
+    for (SizeType current_bit{}; current_bit < remaining_bits; ++current_bit) {
+      *str_byte_block++ =
         (storage_[current_bit >> BlockInfo::kByteDivConst] >> (current_bit & BlockInfo::kByteModConst) &
          BitMask::kBit) |
         '0';
@@ -3322,10 +3019,7 @@ template<typename Block, typename Allocator>
 [[nodiscard]] constexpr func operator&(
   const bits::DynamicBitset<Block, Allocator>& lhs,  //
   const bits::DynamicBitset<Block, Allocator>& rhs
-) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */
-{
-  BITS_DYNAMIC_BITSET_ASSERT(&lhs != &rhs);
-
+) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */ {
   auto bits{lhs};
   bits &= rhs;
   return bits;
@@ -3354,10 +3048,7 @@ template<typename Block, typename Allocator>
 [[nodiscard]] constexpr func operator|(
   const bits::DynamicBitset<Block, Allocator>& lhs,  //
   const bits::DynamicBitset<Block, Allocator>& rhs
-) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */
-{
-  BITS_DYNAMIC_BITSET_ASSERT(&lhs != &rhs);
-
+) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */ {
   auto bits{lhs};
   bits |= rhs;
   return bits;
@@ -3386,10 +3077,7 @@ template<typename Block, typename Allocator>
 [[nodiscard]] constexpr func operator^(
   const bits::DynamicBitset<Block, Allocator>& lhs,  //
   const bits::DynamicBitset<Block, Allocator>& rhs
-) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */
-{
-  BITS_DYNAMIC_BITSET_ASSERT(&lhs != &rhs);
-
+) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */ {
   auto bits{lhs};
   bits ^= rhs;
   return bits;
@@ -3420,9 +3108,9 @@ template<typename Block, typename Allocator>
   const size_t bit_offset
 ) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */
 {
-  auto tempBits{bits};
-  tempBits <<= bit_offset;
-  return tempBits;
+  auto shifted_bits{bits};
+  shifted_bits <<= bit_offset;
+  return shifted_bits;
 }
 
 /**
@@ -3450,16 +3138,15 @@ template<typename Block, typename Allocator>
   const size_t bit_offset
 ) /* clang-format off */ -> bits::DynamicBitset<Block, Allocator> /* clang-format on */
 {
-  auto tempBits{bits};
-  tempBits >>= bit_offset;
-  return tempBits;
+  auto shifted_bits{bits};
+  shifted_bits >>= bit_offset;
+  return shifted_bits;
 }
 
 /**
  * @namespace std
  */
-namespace std
-{
+namespace std {
 
 /**
  * @brief Enables `std::format` support for `DynamicBitset`.
@@ -3470,8 +3157,7 @@ namespace std
  * @tparam Allocator Allocator type meeting Cpp17Allocator requirements.
  */
 template<typename Block, typename Allocator>
-struct formatter<bits::DynamicBitset<Block, Allocator>> : public formatter<string>
-{
+struct formatter<bits::DynamicBitset<Block, Allocator>> : public formatter<string> {
   [[nodiscard]] func format(
     const bits::DynamicBitset<Block, Allocator> bits,  //
     format_context& ctx
@@ -3506,8 +3192,7 @@ template<typename Block, typename Allocator>
 constexpr func swap(
   bits::DynamicBitset<Block, Allocator>& lhs,  //
   bits::DynamicBitset<Block, Allocator>& rhs
-) noexcept -> void
-{
+) noexcept -> void {
   lhs.Swap(rhs);
 }
 
