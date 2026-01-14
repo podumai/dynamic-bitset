@@ -25,7 +25,7 @@ TEST_F(DynamicBitsetFixture, ConstructorTest) {
 }
 
 TEST_F(DynamicBitsetFixture, CopyConstructorTest) {
-  auto test_vector = filled_bitset;
+  bits::DynamicBitset test_vector{filled_bitset};
 
   EXPECT_EQ(test_vector.Size(), filled_bitset.Size());
   EXPECT_EQ(test_vector.Capacity(), filled_bitset.Capacity());
@@ -33,7 +33,7 @@ TEST_F(DynamicBitsetFixture, CopyConstructorTest) {
 }
 
 TEST_F(DynamicBitsetFixture, MoveConstructorTest) {
-  auto test_vector = std::move(filled_bitset);
+  bits::DynamicBitset test_vector{std::move(filled_bitset)};
 
   EXPECT_EQ(16, test_vector.Size());
   EXPECT_EQ(64, test_vector.Capacity());
@@ -48,11 +48,11 @@ TEST_F(DynamicBitsetFixture, MoveConstructorTest) {
 TEST_F(DynamicBitsetFixture, IteratorConstructorTest) {
   using BlockType = typename decltype(filled_bitset)::BlockType;
   {
-    auto test_bitset = bits::DynamicBitset<BlockType>{filled_bitset.cbegin(), filled_bitset.cend()};
+    bits::DynamicBitset<BlockType> test_bitset{filled_bitset.cbegin(), filled_bitset.cend()};
     EXPECT_EQ(test_bitset, filled_bitset);
   }
   {
-    auto test_bitset = bits::DynamicBitset<BlockType>{empty_bitset.cbegin(), empty_bitset.cend()};
+    bits::DynamicBitset<BlockType> test_bitset{empty_bitset.cbegin(), empty_bitset.cend()};
     EXPECT_EQ(test_bitset, empty_bitset);
   }
 }
@@ -90,7 +90,7 @@ TEST_F(DynamicBitsetFixture, CountMethodTest) {
 }
 
 TEST_F(DynamicBitsetFixture, ReserveMethodTest) {
-  EXPECT_THROW(empty_bitset.Reserve(std::numeric_limits<size_t>::max()), std::bad_array_new_length);
+  EXPECT_THROW(empty_bitset.Reserve(std::numeric_limits<std::size_t>::max()), std::bad_array_new_length);
   empty_bitset.Reserve(10);
 
   EXPECT_EQ(0, empty_bitset.Size());
@@ -168,7 +168,7 @@ TEST_F(DynamicBitsetFixture, ResizeMethodTest) {
 }
 
 TEST_F(DynamicBitsetFixture, PushBackMethodTest) {
-  for (auto i = std::size_t{}; i < 10; ++i) {
+  for (std::size_t i{}; i < 10; ++i) {
     empty_bitset.PushBack(true);
     filled_bitset.PushBack(true);
   }
@@ -178,7 +178,7 @@ TEST_F(DynamicBitsetFixture, PushBackMethodTest) {
 }
 
 TEST_F(DynamicBitsetFixture, PopBackMethodTest) {
-  for (auto i = std::size_t{}; i < 16; ++i) {
+  for (std::size_t i{}; i < 16; ++i) {
     filled_bitset.PopBack();
   }
   EXPECT_EQ(0, filled_bitset.Size());
@@ -187,7 +187,7 @@ TEST_F(DynamicBitsetFixture, PopBackMethodTest) {
 TEST_F(DynamicBitsetFixture, SetIndexMethodTest) {
   EXPECT_THROW(empty_bitset.Set(10), std::out_of_range);
 
-  for (auto i = std::size_t{}; i < 4; ++i) {
+  for (std::size_t i{}; i < 4; ++i) {
     filled_bitset.Set(i, false);
   }
 
@@ -197,7 +197,7 @@ TEST_F(DynamicBitsetFixture, SetIndexMethodTest) {
 TEST_F(DynamicBitsetFixture, SetMethodTest) {
   EXPECT_THROW(empty_bitset.Set(), std::out_of_range);
 
-  auto test_vector = bits::DynamicBitset{16};
+  bits::DynamicBitset<> test_vector{16};
   test_vector.Set();
 
   EXPECT_EQ(false, test_vector.None()) << "'Set' method must set all bits to true";
@@ -206,7 +206,7 @@ TEST_F(DynamicBitsetFixture, SetMethodTest) {
 TEST_F(DynamicBitsetFixture, ResetIndexMethodTest) {
   EXPECT_THROW(empty_bitset.Reset(10), std::out_of_range);
 
-  for (auto i = std::size_t{}; i < 4; ++i) {
+  for (std::size_t i{}; i < 4; ++i) {
     filled_bitset.Reset(i);
   }
 
@@ -224,7 +224,7 @@ TEST_F(DynamicBitsetFixture, ResetMethodTest) {
 TEST_F(DynamicBitsetFixture, FlipIndexMethodTest) {
   EXPECT_THROW(empty_bitset.Flip(10), std::out_of_range);
 
-  for (auto i = std::size_t{}; i < 4; ++i) {
+  for (std::size_t i{}; i < 4; ++i) {
     filled_bitset.Flip(i);
   }
 
@@ -251,7 +251,7 @@ TEST_F(DynamicBitsetFixture, SwapMethodTest) {
 }
 
 TEST_F(DynamicBitsetFixture, SubscriptOperatorTest) {
-  for (auto i = std::size_t{}; i < 10; ++i) {
+  for (std::size_t i{}; i < 10; ++i) {
     ASSERT_EQ(true, static_cast<bool>(filled_bitset[i]));
     filled_bitset[i] = false;
     ASSERT_EQ(false, static_cast<bool>(filled_bitset[i]));
@@ -445,14 +445,14 @@ TEST_F(DynamicBitsetFixture, CopyRhsTest) {
 }
 
 TEST_F(DynamicBitsetFixture, AdvancedLhsRhsTest) {
-  for (auto i = std::size_t{}; i < 16; ++i) {
+  for (std::size_t i{}; i < 16; ++i) {
     filled_bitset >>= 1;
     ASSERT_EQ(false, static_cast<bool>(filled_bitset[i]));
   }
 
   filled_bitset.Set();
 
-  for (auto i = std::size_t{}; i < 16; ++i) {
+  for (std::size_t i{}; i < 16; ++i) {
     filled_bitset <<= 1;
     ASSERT_EQ(false, static_cast<bool>(filled_bitset[15 - i]));
   }
@@ -485,8 +485,8 @@ TEST_F(DynamicBitsetFixture, AdvancedLhsRhsTest) {
 }
 
 TEST_F(DynamicBitsetFixture, IteratorPredicateTest) {
-  auto begin_iterator = filled_bitset.begin();
-  auto end_iterator = filled_bitset.end();
+  auto begin_iterator{filled_bitset.begin()};
+  auto end_iterator{filled_bitset.end()};
 
   EXPECT_EQ(false, begin_iterator == end_iterator);
   EXPECT_EQ(true, begin_iterator != end_iterator);
@@ -497,9 +497,9 @@ TEST_F(DynamicBitsetFixture, IteratorPredicateTest) {
 }
 
 TEST_F(DynamicBitsetFixture, IteratorArithmeticTest) {
-  auto begin_iterator = filled_bitset.begin();
-  auto end_iterator = filled_bitset.end();
-  auto bitset_size = filled_bitset.Size();
+  auto begin_iterator{filled_bitset.begin()};
+  auto end_iterator{filled_bitset.end()};
+  auto bitset_size{filled_bitset.Size()};
 
   EXPECT_EQ(bitset_size, end_iterator - begin_iterator);
   ASSERT_EQ(false, begin_iterator + 0 == end_iterator);
@@ -527,7 +527,7 @@ TEST_F(DynamicBitsetFixture, IteratorBitwiseTraverseTest) {
 
 TEST_F(DynamicBitsetFixture, IteratorBitwiseOrTest) {
   {
-    auto bitset = filled_bitset;
+    bits::DynamicBitset bitset{filled_bitset};
     std::for_each(bitset.begin(), bitset.end(), [](auto&& value) constexpr noexcept -> void {
       std::forward<decltype(value)>(value) |= false;
     });
@@ -562,17 +562,17 @@ TEST_F(DynamicBitsetFixture, IteratorBitwiseXorTest) {
 }
 
 TEST_F(DynamicBitsetFixture, StressTest) {
-  auto test_vector = bits::DynamicBitset{};
+  bits::DynamicBitset test_vector{};
 
-  constexpr auto kMaxTestSize = std::size_t{std::numeric_limits<int>::max()};
+  constexpr std::size_t kMaxTestSize{std::numeric_limits<int>::max()};
 
-  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
+  for (std::size_t i{}; i < kMaxTestSize; ++i) {
     test_vector.PushBack(true);
   }
 
   ASSERT_EQ(kMaxTestSize, test_vector.Count());
 
-  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
+  for (std::size_t i{}; i < kMaxTestSize; ++i) {
     test_vector.PopBack();
   }
 
@@ -580,7 +580,7 @@ TEST_F(DynamicBitsetFixture, StressTest) {
 
   test_vector.ShrinkToFit();
 
-  constexpr auto kMidTestSize = std::size_t{kMaxTestSize >> 1};
+  constexpr std::size_t kMidTestSize{kMaxTestSize >> 1};
 
   test_vector.Resize(kMaxTestSize, true);
 
@@ -596,21 +596,21 @@ TEST_F(DynamicBitsetFixture, StressTest) {
 }
 
 TEST_F(DynamicBitsetFixture, TemplateAllocatorTest) {
-  constexpr auto kBufferSize = std::size_t{1000};
-  auto buffer = std::array<std::size_t, kBufferSize>{};
-  auto buffer_resource = std::pmr::monotonic_buffer_resource{buffer.data(), kBufferSize};
-  auto allocator = std::pmr::polymorphic_allocator<std::size_t>{&buffer_resource};
-  auto test_vector = bits::DynamicBitset<std::size_t, decltype(allocator)>{allocator};
+  constexpr std::size_t kBufferSize{1000};
+  std::array<std::size_t, kBufferSize> buffer{};
+  std::pmr::monotonic_buffer_resource buffer_resource{buffer.data(), kBufferSize};
+  std::pmr::polymorphic_allocator<std::size_t> allocator{&buffer_resource};
+  bits::DynamicBitset<std::size_t, decltype(allocator)> test_vector{allocator};
 
-  constexpr auto kMaxTestSize = std::size_t{7200};  // NOLINT
+  constexpr std::size_t kMaxTestSize{7200};  // NOLINT
 
-  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
+  for (std::size_t i{}; i < kMaxTestSize; ++i) {
     test_vector.PushBack(true);
   }
 
   ASSERT_EQ(kMaxTestSize, test_vector.Count());
 
-  for (auto i = std::size_t{}; i < kMaxTestSize; ++i) {
+  for (std::size_t i{}; i < kMaxTestSize; ++i) {
     test_vector.PopBack();
   }
 
@@ -618,7 +618,7 @@ TEST_F(DynamicBitsetFixture, TemplateAllocatorTest) {
 
   test_vector.ShrinkToFit();
 
-  constexpr auto kMidTestSize = std::size_t{kMaxTestSize >> 1};
+  constexpr std::size_t kMidTestSize{kMaxTestSize >> 1};
 
   test_vector.Resize(kMaxTestSize, true);
 
